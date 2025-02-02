@@ -1,0 +1,15 @@
+development:
+  db:
+    name: app-backend
+    host: localhost
+    port: 3306
+    user: root
+    password: imqi1@db
+
+production:
+  db:
+    name: zeabur
+    host: sha1.clusters.zeabur.com
+    port: 32545
+    user: root
+    password: rt9gmapd3hwvKW7fXSRzeN068s421Fy5

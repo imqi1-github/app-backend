@@ -1,12 +1,12 @@
 from flask import Flask, render_template
 from flask_restx import Api
 
-import blueprints
+from blueprints import number_blueprint
 
 app = Flask(__name__)
 api = Api(app, doc='/docs')
 
-app.register_blueprint(blueprints.number_blueprint, url_prefix="/number")
+app.register_blueprint(number_blueprint, url_prefix="/number")
 
 
 @app.route('/')
@@ -15,4 +15,4 @@ def hello_world():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

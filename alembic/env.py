@@ -2,7 +2,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-from models import db_url, BaseModel  # 导入你定义的 get_db_url 方法
+from core.db import db_url, BaseModel  # 导入你定义的 get_db_url 方法
 
 # 这里是 Alembic 配置对象，提供对正在使用的 .ini 配置文件的访问
 config = context.config
