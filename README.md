@@ -42,3 +42,5 @@ backend
 需要修改数据库模型就在 models 中修改，然后执行数据库迁移脚本。
 
 执行数据库迁移脚本就运行 migrate.sh 脚本。
+
+若要部署至生产环境中，请指定环境变量 `ENVIRONMENT=production`，然后更新 config.yaml 中 production 分支的配置。
