@@ -23,16 +23,15 @@ def get_number():
 @number_blueprint.route('/set', methods=['GET'])
 def set_number():
     with Session() as session:
-        number = request.args.get('number', 0, type=int)
+        number_value = request.args.get('number', 0, type=int)
         try:
             number = session.query(Number).first()
             if number:
-                number.number = 0
-                return {'number': number.number}
+                number.number = number_value
             else:
-                session.add(Number(number=0))
-                session.commit()
-                return {'number': 0}
+                session.add(Number(number=number_value))
+            session.commit()
+            return {'number': number_value}
         except Exception as e:
             session.rollback()
             return {'error': str(e)}, 500
