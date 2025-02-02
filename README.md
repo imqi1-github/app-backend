@@ -12,10 +12,6 @@ pip install -r requirements.txt
 
 ```shell
 python -m main
-# 或
-python -m core.app
-# 或
-sh start.sh
 ```
 
 项目结构：
