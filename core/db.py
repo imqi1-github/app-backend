@@ -23,6 +23,8 @@ class Number(BaseModel):
         return f'<Number {self.number}>'
 
 
+create_tables = lambda: BaseModel.metadata.create_all(engine)
+
 # 入口函数，直接调用创建表的函数
 if __name__ == '__main__':
-    BaseModel.metadata.create_all(engine)  # 创建所有继承自BaseModel的表
+    create_tables()  # 创建所有继承自BaseModel的表
