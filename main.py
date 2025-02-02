@@ -1,9 +1,9 @@
 import os
 
-from core.app import app
-from core.db import db_url, create_tables
+from app import app
+from app.extensions import db
 
 if __name__ == '__main__':
-    print(f"连接数据库的URL：{db_url}")
-    create_tables()
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, port=os.getenv("PORT", default=5000), host='0.0.0.0')

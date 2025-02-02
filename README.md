@@ -23,13 +23,13 @@ sh start.sh
 ```
 backend
 │
-├── alembic/    用于数据库迁移
-├── blueprints/ 路由相关
-├── core/       运行项目相关
-│   ├── __init__.py
-│   ├── app.py
-│   ├── config.py
-│   └── db.py
+├── migrations/         用于数据库迁移
+├── app/                运行项目相关
+│   ├── blueprints/     蓝图
+│   ├── models/         数据模型
+│   ├── __init__.py     应用对象
+│   ├── exteinsions.py  应用扩展，包含SQLAlchemy和数据库迁移工具     
+│   └── config.py       读取配置
 │
 ├── static/     静态文件相关
 ├── templates/  模板文件相关
@@ -37,12 +37,12 @@ backend
 ├── config.yaml 数据库配置文件
 ├── migrate.sh  数据库迁移脚本
 ├── requirements.txt
-├── run.py
+├── main.py     项目入口
 └── .gitignore
 ```
 
-需要扩展路由就在 blueprints 文件夹新建 Python 文件，然后模仿 number.py 那样写，然后在 blueprints.\_\_init\_\_ 文件中或 core.app 加入此蓝图。
+需要扩展路由就在 blueprints 文件夹新建 Python 文件，然后模仿 number.py 那样写，然后在 blueprints.\_\_init\_\_ 文件中或 app 加入此蓝图。
 
-需要修改数据库模型就在 core/db.py 中修改，然后执行数据库迁移脚本。
+需要修改数据库模型就在 models 中修改，然后执行数据库迁移脚本。
 
 执行数据库迁移脚本就运行 migrate.sh 脚本。
