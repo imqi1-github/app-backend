@@ -5,6 +5,7 @@ development:
     port: 3306
     user: root
     password: imqi1@db
+  frontend: http://localhost:5173
 
 production:
   db:
@@ -13,3 +14,4 @@ production:
     port: 3306
     user: demo
     password: demo
+  frontend: https://frontend-demo.qi1.website

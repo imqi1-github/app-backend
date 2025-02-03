@@ -34,13 +34,13 @@ env = getenv("ENVIRONMENT", "development")
 
 match env:
     case "development":
-        db_config = config.development.db
+        config = config.development
     case "production":
-        db_config = config.production.db
+        config = config.production
     case _:
-        db_config = config.development.db
+        config = config.production
 
-# 处理数据库密码中的特殊字符
+db_config = config.db
 db_config.password = db_config.password.replace('@', '%40')
 
 # 数据库连接URL
