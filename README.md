@@ -27,9 +27,6 @@ backend
 │   ├── exteinsions.py  应用扩展，包含SQLAlchemy和数据库迁移工具     
 │   └── config.py       读取配置
 │
-├── static/     静态文件相关
-├── templates/  模板文件相关
-│
 ├── config.yaml 数据库配置文件
 ├── migrate.sh  数据库迁移脚本
 ├── requirements.txt

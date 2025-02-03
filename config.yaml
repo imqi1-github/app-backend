@@ -8,8 +8,8 @@ development:
 
 production:
   db:
-    name: zeabur
-    host: sha1.clusters.zeabur.com
-    port: 32545
-    user: root
-    password: rt9gmapd3hwvKW7fXSRzeN068s421Fy5
+    name: demo
+    host: 127.0.0.1
+    port: 3306
+    user: demo
+    password: demo
