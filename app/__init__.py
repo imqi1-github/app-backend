@@ -10,6 +10,7 @@ app.config.from_object("app.config.Config")
 
 db.init_app(app)
 migrate.init_app(app, db)
+
 app.register_blueprint(number_blueprint, url_prefix="/number")
 app.register_blueprint(user_blueprint, url_prefix="/user")
 
