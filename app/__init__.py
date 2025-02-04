@@ -16,7 +16,7 @@ app.register_blueprint(user_blueprint, url_prefix='/user')
 
 @app.route('/')
 def hello_world():
-    return render_template('index.html')
+    return render_template('index.html', title="毕设后端")
 
 
 @app.after_request
