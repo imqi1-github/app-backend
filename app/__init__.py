@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request
+import os
+
+from flask import Flask, render_template, request, send_file
+from flask_cors import CORS
 
 from app.blueprints import number_blueprint, user_blueprint
 from app.config import config
@@ -7,6 +10,9 @@ from app.extensions import db, migrate
 app = Flask(__name__)
 
 app.config.from_object("app.config.Config")
+app.config["static_folder"] = os.path.join(app.root_path, "static")
+
+CORS(app, origins=config.frontend)
 
 db.init_app(app)
 migrate.init_app(app, db)
@@ -17,8 +23,11 @@ app.register_blueprint(user_blueprint, url_prefix="/user")
 
 @app.route("/")
 def hello_world():
-    return render_template("index.html", title="毕设后端")
+    return render_template("index.html", title="毕设后端", frontend=config.frontend)
 
+@app.route("/assets/<path:path>")
+def assets(path):
+    return send_file(os.path.join(app.static_folder, path))
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -28,14 +37,6 @@ def page_not_found(e):
 @app.errorhandler(405)
 def method_not_allowed(e):
     return "", 405
-
-
-@app.after_request
-def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = config.frontend
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    return response
 
 
 @app.before_request
