@@ -14,7 +14,7 @@ if __name__ == '__main__':
                     username="admin",
                     password="123456",
                     email="example@email.com",
-                    nickname="昵称",
+                    nickname="管理员",
                     role="admin",
                 ))
 
