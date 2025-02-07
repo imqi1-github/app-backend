@@ -7,8 +7,8 @@ from app.models.user import User
 
 user_blueprint = Blueprint("user", __name__)
 
-@user_blueprint.route("/new", methods=["POST"])
-def new_user():
+@user_blueprint.route("/register", methods=["POST"])
+def register_user():
     args = request.json
     username = args.get("username")
     if not username:
@@ -22,11 +22,15 @@ def new_user():
     nickname = args.get("nickname")
     if not nickname:
         nickname = username
-    role = UserRole.User
+    role = UserRole.User.value
 
     try:
-        db.session.add(User(username=username, password=password, email=email, nickname=nickname, role=role))
+        if db.session.query(User).where(User.username == username).count():
+            return {'error': '该用户名已存在'}, 400
+        user = User(username=username, password=password, email=email, nickname=nickname, role=role)
+        db.session.add(user)
         db.session.commit()
+        return {"msg": "注册成功", "user_id": user.id}
     except Exception as e:
         db.session.rollback()
         return {'error': str(e)}, 500
