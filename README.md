@@ -8,6 +8,13 @@
 pip install -r requirements.txt
 ```
 
+安装数据库：
+
+```shell
+flask db init
+```
+
+
 启动服务器：
 
 ```shell
