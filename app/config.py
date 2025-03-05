@@ -30,6 +30,9 @@ current_file = os.path.realpath(__file__)
 config_file = os.path.abspath(os.path.join(current_file, "../../config.yaml"))
 config = load_config(config_file)
 
+# 和风天气API key
+qweather_api_key = config.qweather_api_key
+
 env = getenv("ENVIRONMENT", "development")
 
 match env:

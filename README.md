@@ -14,7 +14,6 @@ pip install -r requirements.txt
 flask db init
 ```
 
-
 启动服务器：
 
 ```shell
@@ -23,7 +22,7 @@ python -m main
 
 项目结构：
 
-```
+```txt
 backend
 │
 ├── migrations/         用于数据库迁移

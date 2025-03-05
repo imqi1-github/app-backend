@@ -3,8 +3,12 @@ import os
 from flask import Flask, render_template, request, send_file
 from flask_cors import CORS
 
-from app.blueprints import number_blueprint, user_blueprint
-from app.blueprints.dashboard import dashboard_blueprint
+from app.blueprints import (
+    number_blueprint,
+    user_blueprint,
+    dashboard_blueprint,
+    weather_blueprint,
+)
 from app.config import config
 from app.extensions import db, migrate
 
@@ -21,6 +25,7 @@ migrate.init_app(app, db)
 app.register_blueprint(number_blueprint, url_prefix="/number")
 app.register_blueprint(user_blueprint, url_prefix="/user")
 app.register_blueprint(dashboard_blueprint, url_prefix="/dashboard")
+app.register_blueprint(weather_blueprint, url_prefix="/weather")
 
 
 @app.route("/")
