@@ -5,7 +5,8 @@ development:
     port: 3306
     user: root
     password: imqi1@db
-  frontend: http://localhost:5173
+  frontend: https://localhost:5173
+  backend: https://localhost:5000
 
 production:
   db:
@@ -15,5 +16,6 @@ production:
     user: demo
     password: demo
   frontend: https://frontend-demo.qi1.website
+  backend: https://backend-demo.qi1.website
 
 qweather_api_key: 8e331c0c65774fa4bc8e8ac4ef976554

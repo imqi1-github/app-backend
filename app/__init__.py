@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, send_from_directory
 from flask_cors import CORS
 
 from app.blueprints import (
@@ -16,6 +16,13 @@ app = Flask(__name__)
 
 app.config.from_object("app.config.Config")
 app.config["static_folder"] = os.path.join(app.root_path, "static")
+
+UPLOAD_FOLDER = os.path.abspath("uploads")  # 转换为绝对路径
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 限制文件大小为 16MB
 
 CORS(app, origins=config.frontend, supports_credentials=True)
 
@@ -57,3 +64,10 @@ def before_request():
     if not referer.startswith(config.frontend):
         return "", 403
     return
+
+
+@app.route("/download/<filename>", methods=["GET"])
+def download_file(filename):
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"], filename, as_attachment=True
+    )

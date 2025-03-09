@@ -1,4 +1,4 @@
 from app.models.number import Number
-from app.models.user import User
+from app.models.user import User, UserInformation, UserUpload
 
-models = [Number, User, ]
+models = [Number, User, UserInformation, UserUpload]

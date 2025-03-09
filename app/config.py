@@ -46,6 +46,8 @@ match env:
 db_config = config.db
 db_config.password = db_config.password.replace('@', '%40')
 
+backend_url = config.backend
+
 # 数据库连接URL
 db_url = f'mysql+pymysql://{db_config.user}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.name}?charset=utf8'
 
