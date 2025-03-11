@@ -2,7 +2,7 @@ import os.path
 import time
 import traceback
 
-from flask import Blueprint, request, Response, make_response
+from flask import Blueprint, request, make_response
 from sqlalchemy import and_
 
 from app.constants import UserRole, FileType
@@ -39,7 +39,7 @@ def login_required(f):
             user_id = serializer.loads(user_id_cookie)
             return user_id, None
         except (BadSignature, SignatureExpired):
-            response = make_response({"msg": "用户未登录或登录状态过期"})
+            response = make_response({"error": "用户未登录或登录状态过期"})
             response.delete_cookie("user_id")
             return None, response
 
@@ -70,32 +70,29 @@ def register_user():
     args = request.json
     username = args.get("username")
     if not username:
-        return {"error": "必须填写用户名"}, 400
+        return {"error": "必须填写用户名"}
     password = args.get("password")
     if not password:
-        return {"error": "必须填写密码"}, 400
-    email = args.get("email")
-    if not email:
-        return {"error": "必须填写邮箱"}, 400
-    nickname = args.get("nickname")
-    if not nickname:
-        nickname = username
+        return {"error": "必须填写密码"}
     role = UserRole.User.value
 
     try:
         if db.session.query(User).where(User.username == username).count():
-            return {"error": "该用户名已存在"}, 400
+            return {"error": "该用户名已存在"}
         user = User(
             username=username,
             password=password,
-            email=email,
-            nickname=nickname,
             role=role,
         )
+        information = UserInformation(
+            user=user,
+        )
         db.session.add(user)
+        db.session.add(information)
         db.session.commit()
         return {"msg": "注册成功", "user_id": user.id}
     except Exception as e:
+        traceback.print_exc()
         db.session.rollback()
         return {"error": str(e)}, 500
 
@@ -218,6 +215,7 @@ def upload_avatar():
             "user": db.session.query(User).where(User.id == user_id).first().json,
         }, 200
     except Exception as e:
+        traceback.print_exc()
         db.session.rollback()
         return {"error": str(e)}, 500
 
@@ -248,6 +246,7 @@ def set_nickname():
         user = db.session.query(User).where(User.id == user_id).first()
         return {"msg": "昵称修改成功", "user": user.json}
     except Exception as e:
+        traceback.print_exc()
         db.session.rollback()
         return {"error": str(e)}, 500
 
@@ -279,5 +278,6 @@ def set_position():
         user = db.session.query(User).where(User.id == user_id).first()
         return {"msg": "昵称修改成功", "user": user.json}
     except Exception as e:
+        traceback.print_exc()
         db.session.rollback()
         return {"error": str(e)}, 500

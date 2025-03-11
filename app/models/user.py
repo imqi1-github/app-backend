@@ -1,3 +1,5 @@
+import random
+import string
 import time
 
 from app.extensions import db
@@ -10,7 +12,8 @@ class User(db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password = db.Column(db.String(64), nullable=False)
     role = db.Column(db.String(64), default=UserRole.User)
-    information = db.relationship("UserInformation", lazy=True)  # 关系字段
+    information = db.relationship("UserInformation", back_populates="user", lazy=True)
+    uploads = db.relationship("UserUpload", back_populates="user", lazy=True)
 
     def __repr__(self):
         return "<User %r>" % self.username
@@ -23,6 +26,7 @@ class User(db.Model):
             "password": self.password,
             "role": self.role,
             "information": [info.json for info in self.information],
+            "uploads": [upload.json for upload in self.uploads],  # 添加 uploads
         }
 
     def __getstate__(self):
@@ -32,14 +36,16 @@ class User(db.Model):
 class UserInformation(db.Model):
     __tablename__ = "user_information"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
-        db.Integer, db.ForeignKey("user.id"), nullable=False
-    )  # 定义外键
-    email = db.Column(db.String(64))
-    nickname = db.Column(db.String(64))
-    position_province = db.Column(db.String(32))
-    position_city = db.Column(db.String(32))
-    avatar_path = db.Column(db.String(512))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    email = db.Column(db.String(64), default="你还未输入你的邮箱")
+    nickname = db.Column(
+        db.String(64),
+        default="用户昵称" + "".join(random.choices(string.ascii_lowercase, k=8)),
+    )
+    position_province = db.Column(db.String(32), default="河北省")
+    position_city = db.Column(db.String(32), default="秦皇岛市")
+    avatar_path = db.Column(db.String(512), default="/img/default_avatar.png")
+    user = db.relationship("User", back_populates="information")
 
     def __repr__(self):
         return "<UserInformation %r>" % self.id
@@ -69,6 +75,7 @@ class UserUpload(db.Model):
     filepath = db.Column(db.String(512), nullable=False)
     upload_time = db.Column(db.Integer, nullable=False, default=time.time())
     comment = db.Column(db.String(256))
+    user = db.relationship("User", back_populates="uploads")
 
     def __repr__(self):
         return "<UserUpload %r>" % self.filename
@@ -82,6 +89,7 @@ class UserUpload(db.Model):
             "filetype": self.filetype,
             "filepath": self.filepath,
             "upload_time": self.upload_time,
+            "comment": self.comment,
         }
 
     def __getstate__(self):

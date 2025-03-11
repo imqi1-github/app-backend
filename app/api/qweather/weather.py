@@ -9,8 +9,11 @@ from requests import get
 real_api = "https://devapi.qweather.com/v7/weather/now"
 weather_forecast_api_daily = "https://devapi.qweather.com/v7/weather/%dd"
 weather_forecast_api_hour = "https://devapi.qweather.com/v7/weather/24h"
-quality_api_current = "https://devapi.qweather.com/airquality/v1/current/%s/%s"
-quality_api_daily = "https://devapi.qweather.com/airquality/v1/daily/%s/%s"
+quality_api_current = "https://devapi.qweather.com/airquality/v1/current/%f/%f"
+quality_api_daily = "https://devapi.qweather.com/airquality/v1/daily/%f/%f"
+minutely_precipitation_api = "https://devapi.qweather.com/v7/minutely/5m?location=%.2f,%.2f"
+indices_api = "https://devapi.qweather.com/v7/indices/1d?location=%d&type=3,5,6,8,9,10,12,13,15,16"
+
 
 def get_location_code(location):
     geo_response = get(
@@ -32,7 +35,7 @@ def get_location_coordinate(location):
     geo_response.raise_for_status()
     latitude = geo_response.json()["location"][0]["lat"]
     longitude = geo_response.json()["location"][0]["lon"]
-    return latitude, longitude
+    return float(latitude), float(longitude)
 
 
 def get_weather_now(location):
@@ -69,6 +72,7 @@ def get_weather_forecast_hourly(location):
     forecast_response.raise_for_status()
     return forecast_response.json()
 
+
 def get_air_quality_current(location):
     coordinate = get_location_coordinate(location)
     quality_response = get(
@@ -78,6 +82,7 @@ def get_air_quality_current(location):
     quality_response.raise_for_status()
     return quality_response.json()
 
+
 def get_air_quality_forecast(location):
     coordinate = get_location_coordinate(location)
     forecast_response = get(
@@ -86,3 +91,22 @@ def get_air_quality_forecast(location):
     )
     forecast_response.raise_for_status()
     return forecast_response.json()
+
+
+def get_minutely_precipitation(location):
+    coordinate = get_location_coordinate(location)
+    response = get(
+        minutely_precipitation_api % tuple(reversed(coordinate)),
+        headers={"X-QW-Api-Key": qweather_api_key},
+    )
+    response.raise_for_status()
+    return response.json()
+
+def get_indices(location):
+    location_code = get_location_code(location)
+    response = get(
+        indices_api % int(location_code),
+        headers={"X-QW-Api-Key": qweather_api_key},
+    )
+    response.raise_for_status()
+    return response.json()

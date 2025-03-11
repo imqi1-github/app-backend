@@ -48,10 +48,10 @@ def login():
     args = request.json
     username = args.get("username")
     if not username:
-        return {"error": "必须填写用户名"}, 400
+        return {"error": "必须填写用户名"}
     password = args.get("password")
     if not password:
-        return {"error": "必须填写密码"}, 400
+        return {"error": "必须填写密码"}
 
     try:
         id = (
@@ -66,7 +66,7 @@ def login():
             .first()
         )
         if not id:
-            return {"error": "用户名或密码填写错误"}, 400
+            return {"error": "用户名或密码填写错误"}
 
         response = make_response({"msg": "登录成功"})
 
@@ -92,7 +92,7 @@ def login():
 def info():
     user_id = get_userid_by_cookie()
     if not user_id:
-        return {"error": "参数 user_id 缺失"}, 400
+        return {"error": "参数 user_id 缺失"}
     result = db.session.query(User).where(User.id == user_id).first()
     return result.json
 
