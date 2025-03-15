@@ -7,6 +7,11 @@ development:
     password: imqi1@db
   frontend: https://localhost:5173
   backend: https://localhost:5000
+  redis:
+    state: on
+    host: 127.0.0.1
+    port: 6379
+    password:
 
 production:
   db:
@@ -17,5 +22,11 @@ production:
     password: demo
   frontend: https://frontend-demo.qi1.website
   backend: https://backend-demo.qi1.website
+  redis:
+    state: off
+    host: 127.0.0.1
+    port: 6379
+    password:
 
+logging_file: backend.log
 qweather_api_key: 8e331c0c65774fa4bc8e8ac4ef976554

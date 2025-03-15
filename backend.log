@@ -1,0 +1,68 @@
+2025-03-15 21:37:16,010 - weather.py[line:25] - INFO: GET /coordinates, args: {'location': '北京市'}
+2025-03-15 21:37:16,011 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=coordinates@北京市
+2025-03-15 21:37:16,011 - weather.py[line:33] - INFO: 从缓存加载坐标: 北京市
+2025-03-15 21:37:16,013 - weather.py[line:49] - INFO: GET /now, args: {'location': '北京市'}
+2025-03-15 21:37:16,013 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=weather_now@北京市
+2025-03-15 21:37:16,013 - weather.py[line:57] - INFO: 从缓存加载实时天气: 北京市
+2025-03-15 21:37:16,015 - weather.py[line:125] - INFO: GET /air-quality-current, args: {'location': '北京市'}
+2025-03-15 21:37:16,015 - extensions.py[line:149] - WARNING: Redis中未找到key=air_quality_current@北京市
+2025-03-15 21:37:16,017 - weather.py[line:101] - INFO: GET /forecast-hourly, args: {'location': '北京市'}
+2025-03-15 21:37:16,018 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=forecast_hourly@北京市
+2025-03-15 21:37:16,018 - weather.py[line:109] - INFO: 从缓存加载逐小时天气预报: 北京市
+2025-03-15 21:37:16,019 - weather.py[line:175] - INFO: GET /minutely-precipitation, args: {'location': '北京市'}
+2025-03-15 21:37:16,019 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=minutely_precipitation@北京市
+2025-03-15 21:37:16,019 - weather.py[line:186] - INFO: 从缓存加载分钟级降水: 北京市
+2025-03-15 21:37:16,021 - weather.py[line:73] - INFO: GET /forecast-daily, args: {'location': '北京市'}
+2025-03-15 21:37:16,021 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=forecast_daily@北京市
+2025-03-15 21:37:16,021 - weather.py[line:85] - INFO: 从缓存加载每日天气预报: 北京市, day: None
+2025-03-15 21:37:16,028 - weather.py[line:202] - INFO: GET /get_indices, args: {'location': '北京市'}
+2025-03-15 21:37:16,028 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=indices@北京市
+2025-03-15 21:37:16,029 - weather.py[line:210] - INFO: 从缓存加载天气指数: 北京市
+2025-03-15 21:37:16,272 - extensions.py[line:134] - INFO: 成功保存对象到Redis，key=air_quality_current@北京市
+2025-03-15 21:37:16,272 - weather.py[line:140] - INFO: 保存当前空气质量到缓存: 北京市
+2025-03-15 21:41:21,982 - weather.py[line:25] - INFO: GET /coordinates, args: {'location': '北京市'}
+2025-03-15 21:41:21,983 - weather.py[line:49] - INFO: GET /now, args: {'location': '北京市'}
+2025-03-15 21:41:21,983 - weather.py[line:125] - INFO: GET /air-quality-current, args: {'location': '北京市'}
+2025-03-15 21:41:21,984 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=coordinates@北京市
+2025-03-15 21:41:21,984 - weather.py[line:33] - INFO: 从缓存加载坐标: 北京市
+2025-03-15 21:41:21,986 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=weather_now@北京市
+2025-03-15 21:41:21,986 - weather.py[line:57] - INFO: 从缓存加载实时天气: 北京市
+2025-03-15 21:41:21,987 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=air_quality_current@北京市
+2025-03-15 21:41:21,987 - weather.py[line:25] - INFO: GET /coordinates, args: {'location': '北京市'}
+2025-03-15 21:41:21,988 - weather.py[line:135] - INFO: 从缓存加载当前空气质量: 北京市
+2025-03-15 21:41:21,989 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=coordinates@北京市
+2025-03-15 21:41:21,989 - weather.py[line:33] - INFO: 从缓存加载坐标: 北京市
+2025-03-15 21:41:21,991 - weather.py[line:49] - INFO: GET /now, args: {'location': '北京市'}
+2025-03-15 21:41:21,991 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=weather_now@北京市
+2025-03-15 21:41:21,992 - weather.py[line:57] - INFO: 从缓存加载实时天气: 北京市
+2025-03-15 21:41:21,994 - weather.py[line:101] - INFO: GET /forecast-hourly, args: {'location': '北京市'}
+2025-03-15 21:41:21,994 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=forecast_hourly@北京市
+2025-03-15 21:41:21,994 - weather.py[line:109] - INFO: 从缓存加载逐小时天气预报: 北京市
+2025-03-15 21:41:21,999 - weather.py[line:175] - INFO: GET /minutely-precipitation, args: {'location': '北京市'}
+2025-03-15 21:41:22,000 - weather.py[line:73] - INFO: GET /forecast-daily, args: {'location': '北京市'}
+2025-03-15 21:41:22,000 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=minutely_precipitation@北京市
+2025-03-15 21:41:22,000 - weather.py[line:186] - INFO: 从缓存加载分钟级降水: 北京市
+2025-03-15 21:41:22,001 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=forecast_daily@北京市
+2025-03-15 21:41:22,001 - weather.py[line:85] - INFO: 从缓存加载每日天气预报: 北京市, day: None
+2025-03-15 21:41:22,009 - weather.py[line:202] - INFO: GET /get_indices, args: {'location': '北京市'}
+2025-03-15 21:41:22,010 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=indices@北京市
+2025-03-15 21:41:22,010 - weather.py[line:210] - INFO: 从缓存加载天气指数: 北京市
+2025-03-15 21:41:23,530 - weather.py[line:101] - INFO: GET /forecast-hourly, args: {'location': '北京市'}
+2025-03-15 21:41:23,530 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=forecast_hourly@北京市
+2025-03-15 21:41:23,530 - weather.py[line:109] - INFO: 从缓存加载逐小时天气预报: 北京市
+2025-03-15 21:41:23,884 - weather.py[line:125] - INFO: GET /air-quality-current, args: {'location': '北京市'}
+2025-03-15 21:41:23,884 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=air_quality_current@北京市
+2025-03-15 21:41:23,884 - weather.py[line:135] - INFO: 从缓存加载当前空气质量: 北京市
+2025-03-15 21:41:23,885 - weather.py[line:151] - INFO: GET /air-quality-daily, args: {'location': '北京市'}
+2025-03-15 21:41:23,885 - extensions.py[line:149] - WARNING: Redis中未找到key=air_quality_daily@北京市
+2025-03-15 21:41:24,170 - extensions.py[line:134] - INFO: 成功保存对象到Redis，key=air_quality_daily@北京市
+2025-03-15 21:41:24,170 - weather.py[line:164] - INFO: 保存每日空气质量预报到缓存: 北京市
+2025-03-15 21:41:25,599 - weather.py[line:226] - INFO: GET /get_indices_daily, args: {'location': '北京市'}
+2025-03-15 21:41:25,600 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=indices_daily@北京市
+2025-03-15 21:41:25,600 - weather.py[line:234] - INFO: 从缓存加载天气指数: 北京市
+2025-03-15 21:41:26,065 - weather.py[line:125] - INFO: GET /air-quality-current, args: {'location': '北京市'}
+2025-03-15 21:41:26,065 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=air_quality_current@北京市
+2025-03-15 21:41:26,065 - weather.py[line:135] - INFO: 从缓存加载当前空气质量: 北京市
+2025-03-15 21:41:26,066 - weather.py[line:151] - INFO: GET /air-quality-daily, args: {'location': '北京市'}
+2025-03-15 21:41:26,066 - extensions.py[line:152] - INFO: 成功从Redis加载对象，key=air_quality_daily@北京市
+2025-03-15 21:41:26,066 - weather.py[line:159] - INFO: 从缓存加载每日空气质量预报: 北京市

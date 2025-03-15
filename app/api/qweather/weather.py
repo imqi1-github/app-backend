@@ -9,10 +9,13 @@ from requests import get
 real_api = "https://devapi.qweather.com/v7/weather/now"
 weather_forecast_api_daily = "https://devapi.qweather.com/v7/weather/%dd"
 weather_forecast_api_hour = "https://devapi.qweather.com/v7/weather/24h"
-quality_api_current = "https://devapi.qweather.com/airquality/v1/current/%f/%f"
+quality_api_current = "https://devapi.qweather.com/airquality/v1/current/%.2f/%.2f"
 quality_api_daily = "https://devapi.qweather.com/airquality/v1/daily/%f/%f"
-minutely_precipitation_api = "https://devapi.qweather.com/v7/minutely/5m?location=%.2f,%.2f"
+minutely_precipitation_api = (
+    "https://devapi.qweather.com/v7/minutely/5m?location=%.2f,%.2f"
+)
 indices_api = "https://devapi.qweather.com/v7/indices/1d?location=%d&type=3,5,6,8,9,10,12,13,15,16"
+indices_api_daily = "https://devapi.qweather.com/v7/indices/3d?location=%d&type=3,5,6,8,9,10,12,13,15,16"
 
 
 def get_location_code(location):
@@ -22,6 +25,7 @@ def get_location_code(location):
         headers={"X-QW-Api-Key": qweather_api_key},
     )
     geo_response.raise_for_status()
+    print(geo_response.text)
     location_code = geo_response.json()["location"][0]["id"]
     return location_code
 
@@ -102,10 +106,21 @@ def get_minutely_precipitation(location):
     response.raise_for_status()
     return response.json()
 
+
 def get_indices(location):
     location_code = get_location_code(location)
     response = get(
         indices_api % int(location_code),
+        headers={"X-QW-Api-Key": qweather_api_key},
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def get_indices_daily(location):
+    location_code = get_location_code(location)
+    response = get(
+        indices_api_daily % int(location_code),
         headers={"X-QW-Api-Key": qweather_api_key},
     )
     response.raise_for_status()

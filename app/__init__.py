@@ -1,3 +1,4 @@
+import logging
 import os
 
 from flask import Flask, render_template, request, send_file, send_from_directory
@@ -28,6 +29,15 @@ CORS(app, origins=config.frontend, supports_credentials=True)
 
 db.init_app(app)
 migrate.init_app(app, db)
+
+# 日志相关
+app.config['SQLALCHEMY_ECHO'] = False  # 禁用 SQLAlchemy 的 SQL 输出
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 禁用跟踪修改警告
+logging.getLogger('alembic').disabled = True
+logging.getLogger('alembic.runtime.migration').disabled = True  # 专门针对 migration 子记录器
+logging.getLogger('werkzeug').disabled = True
+logging.getLogger('sqlalchemy.engine').disabled = True
+logging.getLogger('sqlalchemy').disabled = True
 
 app.register_blueprint(number_blueprint, url_prefix="/number")
 app.register_blueprint(user_blueprint, url_prefix="/user")

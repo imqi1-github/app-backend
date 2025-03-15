@@ -3,7 +3,6 @@ from os import getenv
 
 import yaml
 
-
 class ConfigReader:
     def __init__(self, config_dict):
         self._config = config_dict
@@ -32,6 +31,7 @@ config = load_config(config_file)
 
 # 和风天气API key
 qweather_api_key = config.qweather_api_key
+logging_file = config.logging_file
 
 env = getenv("ENVIRONMENT", "development")
 
@@ -47,6 +47,8 @@ db_config = config.db
 db_config.password = db_config.password.replace('@', '%40')
 
 backend_url = config.backend
+redis_config = config.redis
+print(f"Redis状态：{redis_config}")
 
 # 数据库连接URL
 db_url = f'mysql+pymysql://{db_config.user}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.name}?charset=utf8'
@@ -55,3 +57,6 @@ db_url = f'mysql+pymysql://{db_config.user}:{db_config.password}@{db_config.host
 class Config:
     SQLALCHEMY_DATABASE_URI = db_url  # 这里可以根据需要换成其他数据库
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+def is_redis_on():
+    return config.redis.state

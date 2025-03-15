@@ -4,7 +4,7 @@ import subprocess
 from sqlalchemy import text
 
 from app import app
-from app.extensions import db
+from app.extensions import db, log
 from app.models import User
 
 if __name__ == "__main__":
@@ -22,6 +22,7 @@ if __name__ == "__main__":
             else:
                 subprocess.call(["sh", "./migrate.sh"])
 
+    log("INFO", "服务器启动中...")
     app.run(
         ssl_context=("./https/localhost.pem", "./https/localhost-key.pem"),
         debug=True,
