@@ -12,8 +12,12 @@ class User(db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password = db.Column(db.String(64), nullable=False)
     role = db.Column(db.String(64), default=UserRole.User)
+
+    # 关系定义
     information = db.relationship("UserInformation", back_populates="user", lazy=True)
     uploads = db.relationship("UserUpload", back_populates="user", lazy=True)
+    posts = db.relationship("Post", back_populates="user", lazy=True)
+    comments = db.relationship("Comment", back_populates="user", lazy=True)  # 新增 comments 关系
 
     def __repr__(self):
         return "<User %r>" % self.username
@@ -23,10 +27,9 @@ class User(db.Model):
         return {
             "id": self.id,
             "username": self.username,
-            "password": self.password,
             "role": self.role,
-            "information": [info.json for info in self.information],
-            "uploads": [upload.json for upload in self.uploads],  # 添加 uploads
+            "information": self.information[0].json if len(self.information) else None,
+            "uploads": [upload.json for upload in self.uploads],
         }
 
     def __getstate__(self):
@@ -36,7 +39,7 @@ class User(db.Model):
 class UserInformation(db.Model):
     __tablename__ = "user_information"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True)
     email = db.Column(db.String(64), default="你还未输入你的邮箱")
     nickname = db.Column(
         db.String(64),

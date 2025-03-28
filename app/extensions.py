@@ -87,15 +87,10 @@ def log(level: LogLevel, message: str) -> None:
     line_no = frame.f_lineno
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_format = (
-        f"{timestamp} - {filename}[line:{line_no}] - {level}: {message}"
-    )
+    log_format = f"{timestamp} - {filename}[line:{line_no}] - {level}: {message}"
 
     # 使用自定义字段名，避免与内置字段冲突
-    extra = {
-        "custom_filename": filename,
-        "custom_lineno": line_no
-    }
+    extra = {"custom_filename": filename, "custom_lineno": line_no}
 
     # 根据日志级别选择颜色并记录
     if level == "ERROR":

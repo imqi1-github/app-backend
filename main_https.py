@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from app import app
 from app.extensions import db, log
-from app.models import User
+from app.models import User, UserInformation
 
 if __name__ == "__main__":
     with app.app_context():
@@ -14,11 +14,18 @@ if __name__ == "__main__":
                 db.create_all()
             if not db.session.query(User).count() > 0:
                 user = User(
+                    id=1,
                     username="admin",
                     password="123456",
                     role="admin",
                 )
                 db.session.add(user)
+                db.session.add(
+                    UserInformation(
+                        user_id=1,
+                        email="example@email.com",
+                    )
+                )
             else:
                 subprocess.call(["sh", "./migrate.sh"])
 

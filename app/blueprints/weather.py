@@ -1,6 +1,5 @@
 from flask import Blueprint, request
 
-from api.qweather.weather import get_indices_daily
 from app.api.qweather.weather import (
     get_weather_now,
     get_weather_forecast_daily,
@@ -10,10 +9,11 @@ from app.api.qweather.weather import (
     get_location_coordinate,
     get_minutely_precipitation,
     get_indices,
+    get_indices_daily
 )
 from app.config import is_redis_on
 from app.extensions import load, save, log
-from utils import print_blanks
+from app.utils import print_blanks
 
 weather_blueprint = Blueprint("weather", __name__)
 

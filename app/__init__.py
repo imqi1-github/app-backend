@@ -9,6 +9,7 @@ from app.blueprints import (
     user_blueprint,
     dashboard_blueprint,
     weather_blueprint,
+    post_blueprint,
 )
 from app.config import config
 from app.extensions import db, migrate
@@ -31,18 +32,21 @@ db.init_app(app)
 migrate.init_app(app, db)
 
 # 日志相关
-app.config['SQLALCHEMY_ECHO'] = False  # 禁用 SQLAlchemy 的 SQL 输出
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 禁用跟踪修改警告
-logging.getLogger('alembic').disabled = True
-logging.getLogger('alembic.runtime.migration').disabled = True  # 专门针对 migration 子记录器
-logging.getLogger('werkzeug').disabled = True
-logging.getLogger('sqlalchemy.engine').disabled = True
-logging.getLogger('sqlalchemy').disabled = True
+app.config["SQLALCHEMY_ECHO"] = False  # 禁用 SQLAlchemy 的 SQL 输出
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # 禁用跟踪修改警告
+logging.getLogger("alembic").disabled = True
+logging.getLogger("alembic.runtime.migration").disabled = (
+    True  # 专门针对 migration 子记录器
+)
+logging.getLogger("werkzeug").disabled = True
+logging.getLogger("sqlalchemy.engine").disabled = True
+logging.getLogger("sqlalchemy").disabled = True
 
 app.register_blueprint(number_blueprint, url_prefix="/number")
 app.register_blueprint(user_blueprint, url_prefix="/user")
 app.register_blueprint(dashboard_blueprint, url_prefix="/dashboard")
 app.register_blueprint(weather_blueprint, url_prefix="/weather")
+app.register_blueprint(post_blueprint, url_prefix="/post")
 
 
 @app.route("/")

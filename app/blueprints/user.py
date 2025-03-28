@@ -1,17 +1,17 @@
 import os.path
 import time
 import traceback
+from functools import wraps
 
 from flask import Blueprint, request, make_response
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlalchemy import and_
 
-from app.constants import UserRole, FileType
-from app.extensions import db
-from app.models.user import User, UserUpload, UserInformation
-from functools import wraps
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-
 from app.config import backend_url
+from app.constants import UserRole, FileType
+from app.extensions import db, is_redis_on, load, save, log
+from app.models.post import Subscribe, Post
+from app.models.user import User, UserUpload, UserInformation
 
 user_blueprint = Blueprint("user", __name__)
 
@@ -281,3 +281,46 @@ def set_position():
         traceback.print_exc()
         db.session.rollback()
         return {"error": str(e)}, 500
+
+
+@user_blueprint.route("/information")
+def get_user_information():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        user_id = get_userid_from_cookie()
+
+    if not user_id:
+        return {"error": "user_id不能为空"}, 400
+
+    log("INFO", f"获取信息 API，'user_id: '{user_id}")
+
+    if is_redis_on():
+        information = load(f"{user_id}@information")
+        if information:
+            log("INFO", f"从缓存中获取信息，information: {information}")
+            return information
+
+    user = db.session.query(User).where(User.id == user_id).first()
+
+    if not user:
+        return {"error": "用户不存在"}, 404
+
+    information = db.session.query(UserInformation).where(UserInformation.user_id == user_id).first()
+
+    if not information:
+        return {"error": "用户信息不存在"}, 404
+
+    subscribe_count = db.session.query(Subscribe).where(Subscribe.user_id == user_id).count()
+    fans_count = db.session.query(Subscribe).where(Subscribe.subscribed_user_id == user_id).count()
+
+    posts = db.session.query(Post).where(Post.user_id == user_id).all()
+
+    result = {"information": information.json, "subscribe_count": subscribe_count, "fans_count":fans_count, "posts": [post.json for post in posts], "user": user.json}
+
+    if is_redis_on():
+        log("INFO", f"将信息保存到缓存中，information: {result}")
+        save(f"{user_id}@information", result, 10)
+
+    log("INFO", f"获取信息 API，result: {result}")
+    return result
+    
