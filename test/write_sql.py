@@ -1,3 +1,6 @@
+import random
+import time
+
 import pandas as pd
 from app.extensions import db
 from app.models import Post, Comment, Category, Relationship, User, UserInformation
@@ -35,7 +38,7 @@ def insert_random_users():
                 user = User(
                     id=user_id,
                     username=username,
-                    password="password123",
+                    password=username,
                     role=UserRole.User.value,
                 )
                 users_to_insert.append(user)
@@ -50,6 +53,10 @@ def insert_random_users():
                 )
                 information_to_insert.append(information)
                 print(f"已准备用户信息 {user_id}")
+
+        users_to_insert[0].username = 'admin'
+        users_to_insert[0].password = '123456'
+        users_to_insert[0].role = UserRole.Admin.value
 
         # 插入用户
         if users_to_insert:
@@ -153,9 +160,9 @@ def load_and_save_to_database():
                 user_id=row["user_id"],
                 title=row["title"],
                 content=row["content"],
-                create_time=row["create_time"],
-                update_time=row["update_time"],
-                comment_count=0,  # 初始为 0，后面更新
+                create_time=time.time() - random.randint(0, 24 * 60 * 60 * 30),
+                update_time=time.time() - random.randint(0, 24 * 60 * 60 * 30),
+                # comment_count=0,  # 初始为 0，后面更新
             )
             posts_to_insert.append(post)
             print(f"已准备帖子 {post_id}：{row['title']}")
@@ -226,7 +233,7 @@ def load_and_save_to_database():
                 post_id=row["post_id"],
                 parent_id=row["parent_id"] if pd.notna(row["parent_id"]) else None,
                 content=row["content"],
-                create_time=row["create_time"],
+                create_time=time.time() - random.randint(0, 24 * 60 * 60 * 30),
             )
             comments_to_insert.append(comment)
             print(f"已准备评论 {comment_id}：帖子 {row['post_id']}")
@@ -242,21 +249,21 @@ def load_and_save_to_database():
         print(f"插入评论时出错：{e}")
         return
 
-    # 8. 更新 Post 的 comment_count
-    print("正在更新帖子的评论数量...")
-    try:
-        for post_id in posts_df["id"]:
-            # 使用 db.session.get() 替代 Post.query.get()
-            post = db.session.get(Post, post_id)
-            if post:
-                comment_count = Comment.query.filter_by(post_id=post_id).count()
-                post.comment_count = comment_count
-        db.session.commit()
-        print("评论数量更新完成。")
-    except Exception as e:
-        db.session.rollback()
-        print(f"更新评论数量时出错：{e}")
-        return
+    # # 8. 更新 Post 的 comment_count
+    # print("正在更新帖子的评论数量...")
+    # try:
+    #     for post_id in posts_df["id"]:
+    #         # 使用 db.session.get() 替代 Post.query.get()
+    #         post = db.session.get(Post, post_id)
+    #         if post:
+    #             comment_count = Comment.query.filter_by(post_id=post_id).count()
+    #             post.comment_count = comment_count
+    #     db.session.commit()
+    #     print("评论数量更新完成。")
+    # except Exception as e:
+    #     db.session.rollback()
+    #     print(f"更新评论数量时出错：{e}")
+    #     return
 
     print("数据加载和保存完成！")
 
@@ -275,4 +282,8 @@ if __name__ == "__main__":
 
     with app.app_context():
         # db.create_all()
+        db.drop_all()
+        main()
+    from rename_image_sql import main
+    with app.app_context():
         main()

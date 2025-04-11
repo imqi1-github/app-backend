@@ -2,18 +2,22 @@ import math
 import mimetypes
 import os
 import random
+import re
 import time
 import traceback
 
+import jieba
 from flask import Blueprint, request, jsonify
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlalchemy import and_
 
-from app.extensions import db, log
+from app.api.map import get_coordinates
+from app.config import backend_url
+from app.extensions import db, log, load
+from app.hook import search_index
+from app.models import UserUpload
 from app.models.post import Post, Category, Subscribe, Comment, Attachment
 from app.models.user import User
-from app.config import backend_url
-from app.models import UserUpload
 
 post_blueprint = Blueprint("post", __name__, url_prefix="/post")
 
@@ -298,6 +302,7 @@ def comments(post_id):
 
 
 @post_blueprint.route("/new", methods=["POST"])
+@search_index
 def new_post():
     try:
         data = request.json
@@ -314,30 +319,45 @@ def new_post():
         if not content:
             return {"error": "内容不能为空"}, 400
 
+        city = data.get("city")
+        place = data.get("place")
+
+        result = get_coordinates(place, city)
+        print(result)
+        if result.get("status") == "1" and int(result.get("count")) >= 1:
+            try:
+                coordinates = result.get("geocodes")[0].get("location")
+            except:
+                coordinates = None
+        else:
+            coordinates = None
+
         post = Post(
             user_id=user_id,
             title=title,
             content=content,
+            coordinates=coordinates,
+            position_name=place,
         )
 
         attachments = data.get("attachments", [])
         for attachment in attachments:
-            post.attachments.append(Attachment(
-                post_id=post.id,
-                file_name = attachment.get('filename'),
-                file_path = attachment.get('filepath'),
-                file_type="image/png"
-            ))
+            post.attachments.append(
+                Attachment(
+                    post_id=post.id,
+                    file_name=attachment.get("filename"),
+                    file_path=attachment.get("filepath"),
+                    file_type="image/png",
+                )
+            )
 
         categories = data.get("categories", [])
         for category in categories:
-            post.categories.append(
-                Category.query.filter_by(id=category).first()
-            )
+            post.categories.append(Category.query.filter_by(id=category).first())
 
         db.session.add(post)
         db.session.commit()
-        return {"msg": "发布成功", 'id': post.id}
+        return {"msg": "发布成功", "id": post.id}
     except Exception as e:
         db.session.rollback()
         log("ERROR", f"发布帖子时出错：{str(e)}")
@@ -406,14 +426,16 @@ def delete_attachment():
 
 
 @post_blueprint.route("/delete")
+@search_index
 def delete_post():
     try:
         post_id = request.args.get("id")
         if not post_id:
-            return {"error": "post_id不能为空"}, 400
+            return {"error": "post_id不能为    空"}, 400
         post = db.session.query(Post).where(Post.id == post_id).first()
         if post:
             db.session.delete(post)
+            db.session.commit()
         return {"msg": "删除成功"}
     except Exception as e:
         db.session.rollback()
@@ -432,4 +454,123 @@ def get_subscribed():
     if not subscribed_user_id:
         return {"error": "subscribed_user_id"}
 
-    return {"subscribed": len(db.session.query(Subscribe).where(and_(Subscribe.user_id == user_id, subscribed_user_id == Subscribe.subscribed_user_id)).all())}
+    return {
+        "subscribed": len(
+            db.session.query(Subscribe)
+            .where(
+                and_(
+                    Subscribe.user_id == user_id,
+                    subscribed_user_id == Subscribe.subscribed_user_id,
+                )
+            )
+            .all()
+        )
+    }
+
+
+@post_blueprint.route("/edit", methods=["POST"])
+@search_index
+def edit_post():
+    try:
+        data = request.json
+
+        post_id = data.get("id")
+        if not post_id:
+            return {"error": "id不能为空"}, 400
+
+        post = db.session.query(Post).where(Post.id == post_id).first()
+        if not post:
+            return {"error": "帖子不存在"}, 404
+
+        user_id = data.get("user_id")
+        if not user_id:
+            return {"error": "user_id不能为空"}, 400
+
+        title = data.get("title")
+        if not title:
+            return {"error": "标题不能为空"}, 400
+
+        content = data.get("content")
+        if not content:
+            return {"error": "内容不能为空"}, 400
+
+        city = data.get("city")
+        place = data.get("place")
+
+        result = get_coordinates(place, city)
+        print(result)
+        if result.get("status") == "1" and int(result.get("count")) >= 1:
+            try:
+                coordinates = result.get("geocodes")[0].get("location")
+            except:
+                coordinates = None
+        else:
+            coordinates = None
+
+        post.title = title
+        post.content = content
+        post.coordinates = coordinates
+        post.position_name = place
+
+        attachments = data.get("attachments", [])
+        post.attachments.clear()
+        for attachment in attachments:
+            post.attachments.append(
+                Attachment(
+                    post_id=post.id,
+                    file_name=attachment.get("filename"),
+                    file_path=attachment.get("filepath"),
+                    file_type="image/png",
+                )
+            )
+
+        categories = data.get("categories", [])
+        post.categories.clear()
+        for category in categories:
+            post.categories.append(Category.query.filter_by(id=category).first())
+
+        db.session.commit()
+        return {"msg": "修改成功", "id": post.id}
+    except Exception as e:
+        db.session.rollback()
+        log("ERROR", f"发布帖子时出错：{str(e)}")
+        traceback.print_exc()
+        return {"error": str(e)}, 500
+
+
+@post_blueprint.route("/search")
+def search():
+    keywords = request.args.get("keywords")
+    if not keywords:
+        return {"error": "keywords不能为空"}, 400
+
+    search_cache = load("search_cache")
+
+    if not search_cache:
+        log("WARNING", "无缓存，尝试缓存搜索内容")
+        from app.hook import _search_index
+
+        search_cache = _search_index()
+
+    searched_posts = set()
+
+    keywords = jieba.cut(keywords, cut_all=False)
+    filtered_words = [
+        w for w in keywords if w.strip() and re.match(r"[\u4e00-\u9fa5a-zA-Z0-9]+", w)
+    ]
+    for keyword in filtered_words:
+        posts = (
+            db.session.query(Post)
+            .where(Post.id.in_(search_cache.get(keyword, [])))
+            .all()
+        )
+        searched_posts.update(posts)
+
+    print(searched_posts)
+
+    return {
+        "msg": "搜索成功",
+        "posts": sorted(
+            [post.json for post in searched_posts], key=lambda x: x["create_time"]
+        ),
+    }

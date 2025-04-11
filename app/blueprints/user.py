@@ -152,28 +152,27 @@ def test_login():
     return {"msg": "登录成功", "user": user.json}
 
 
+def upload_file(filename: str, file: bytes):
+    filepath = os.path.join("uploads", filename)
+
+    with open(filepath, "wb") as f:
+        f.write(file)
+
+    filepath = os.path.join(backend_url, "download", filename)
+
+    return filename, filepath, time.time()
+
+
 @user_blueprint.route("/upload_avatar", methods=["POST"])
 def upload_avatar():
     try:
-        filename = request.headers.get(
-            "X-Filename", f"{int(time.time())}.png"
-        )  # 生成默认文件名
-        filepath = os.path.join("uploads", filename)
+        filename = request.headers.get("X-Filename", f"{int(time.time())}.png")
 
         content_type = request.headers.get("Content-Type", "")
         if not content_type.startswith("image/"):
             return {"error": "只允许上传图片"}, 400
 
-        with open(filepath, "wb") as f:
-            f.write(request.data)
-
-        filepath = os.path.join(backend_url, "download", filename)
-
-        file_info = {
-            "filename": filename,
-            "filepath": filepath,
-            "upload_time": time.time(),
-        }
+        filename, filepath, upload_time = upload_file(filename, request.data)
 
         user_id = get_userid_from_cookie()
         if not user_id:
@@ -209,11 +208,87 @@ def upload_avatar():
 
         db.session.commit()
 
+        file_info = {
+            "filename": filename,
+            "filepath": filepath,
+            "upload_time": time.time(),
+        }
+
         return {
             "msg": "上传成功",
             "file_info": file_info,
             "user": db.session.query(User).where(User.id == user_id).first().json,
         }, 200
+    except Exception as e:
+        traceback.print_exc()
+        db.session.rollback()
+        return {"error": str(e)}, 500
+
+
+@user_blueprint.route("/upload", methods=["POST"])
+def upload():
+    try:
+        filename = request.headers.get("X-Filename", f"{int(time.time())}.png")
+
+        content_type = request.headers.get("Content-Type", "")
+        if not content_type.startswith("image/"):
+            return {"error": "只允许上传图片"}, 400
+
+        filename, filepath, upload_time = upload_file(filename, request.data)
+
+        user_id = get_userid_from_cookie()
+        if not user_id:
+            return {"error": "user_id不能为空"}, 400
+
+        upload = (
+            db.session.query(UserUpload).where(UserUpload.filepath == filepath).first()
+        )
+        if upload:
+            upload.filename = filename
+            upload.filepath = filepath
+            upload.upload_time = time.time()
+
+        else:
+            upload = UserUpload(
+                user_id=user_id,
+                filename=filename,
+                filepath=filepath,
+                filetype=FileType.Image.value,
+            )
+            db.session.add(upload)
+
+        db.session.commit()
+
+        file_info = {
+            "id": upload.id,
+            "filename": filename,
+            "filepath": filepath,
+            "upload_time": time.time(),
+        }
+
+        return {
+            "msg": "上传成功",
+            "file_info": file_info,
+            "user": db.session.query(User).where(User.id == user_id).first().json,
+        }, 200
+    except Exception as e:
+        traceback.print_exc()
+        db.session.rollback()
+        return {"error": str(e)}, 500
+
+
+@user_blueprint.route("/my-uploads")
+def my_uploads():
+    try:
+        user_id = get_userid_from_cookie()
+        if not user_id:
+            return {"error": "user_id不能为空"}, 400
+
+        uploads = (
+            db.session.query(UserUpload).where(UserUpload.user_id == user_id).all()
+        )
+
+        return {"msg": "获取成功", "uploads": [upload.json for upload in uploads]}
     except Exception as e:
         traceback.print_exc()
         db.session.rollback()
@@ -250,13 +325,14 @@ def set_nickname():
         db.session.rollback()
         return {"error": str(e)}, 500
 
+
 @user_blueprint.route("/set-position", methods=["POST"])
 @login_required
 def set_position():
     try:
         province = request.json.get("province", None)
         if not province:
-            return {"error": "必须填写省名称"},
+            return ({"error": "必须填写省名称"},)
 
         city = request.json.get("city", None)
         if not city:
@@ -305,17 +381,33 @@ def get_user_information():
     if not user:
         return {"error": "用户不存在"}, 404
 
-    information = db.session.query(UserInformation).where(UserInformation.user_id == user_id).first()
+    information = (
+        db.session.query(UserInformation)
+        .where(UserInformation.user_id == user_id)
+        .first()
+    )
 
     if not information:
         return {"error": "用户信息不存在"}, 404
 
-    subscribe_count = db.session.query(Subscribe).where(Subscribe.user_id == user_id).count()
-    fans_count = db.session.query(Subscribe).where(Subscribe.subscribed_user_id == user_id).count()
+    subscribe_count = (
+        db.session.query(Subscribe).where(Subscribe.user_id == user_id).count()
+    )
+    fans_count = (
+        db.session.query(Subscribe)
+        .where(Subscribe.subscribed_user_id == user_id)
+        .count()
+    )
 
     posts = db.session.query(Post).where(Post.user_id == user_id).all()
 
-    result = {"information": information.json, "subscribe_count": subscribe_count, "fans_count":fans_count, "posts": [post.json for post in posts], "user": user.json}
+    result = {
+        "information": information.json,
+        "subscribe_count": subscribe_count,
+        "fans_count": fans_count,
+        "posts": [post.json for post in posts],
+        "user": user.json,
+    }
 
     if is_redis_on():
         log("INFO", f"将信息保存到缓存中，information: {result}")
@@ -323,4 +415,21 @@ def get_user_information():
 
     log("INFO", f"获取信息 API，result: {result}")
     return result
-    
+
+@user_blueprint.route("/delete-upload")
+def delete_upload():
+    try:
+        upload_id = request.args.get("id")
+        if not upload_id:
+            return {"error": "upload_id不能为空"}, 400
+
+        db.session.delete(db.session.query(UserUpload).where(UserUpload.id == upload_id).first())
+        db.session.commit()
+
+        return {
+            "msg": "删除成功",
+        }, 200
+    except Exception as e:
+        traceback.print_exc()
+        db.session.rollback()
+        return {"error": str(e)}, 500

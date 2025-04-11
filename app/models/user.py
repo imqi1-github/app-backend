@@ -43,7 +43,7 @@ class UserInformation(db.Model):
     email = db.Column(db.String(64), default="你还未输入你的邮箱")
     nickname = db.Column(
         db.String(64),
-        default="用户昵称" + "".join(random.choices(string.ascii_lowercase, k=8)),
+        default=lambda _: "用户昵称" + "".join(random.choices(string.ascii_lowercase, k=8)),
     )
     position_province = db.Column(db.String(32), default="河北省")
     position_city = db.Column(db.String(32), default="秦皇岛市")

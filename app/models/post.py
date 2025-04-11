@@ -1,4 +1,5 @@
 import time
+
 from app.extensions import db
 
 
@@ -15,8 +16,10 @@ class Post(db.Model):
         db.Integer, nullable=False, default=lambda: int(time.time())
     )
     likes = db.Column(db.Integer, default=0)
+    coordinates = db.Column(db.String(32))
+    position_name = db.Column(db.String(64))
     user = db.relationship("User", back_populates="posts")
-    comments = db.relationship("Comment", back_populates="post")
+    comments = db.relationship("Comment", back_populates="post", cascade="all, delete-orphan")
     published = db.Column(db.Integer, default=0)
     categories = db.relationship(
         "Category", secondary="relationship", back_populates="posts"
@@ -27,6 +30,12 @@ class Post(db.Model):
 
     def __repr__(self) -> str:
         return f"<Post {self.title}>"
+
+    def __eq__(self, other):
+        return isinstance(other, Post) and other.id == self.id
+
+    def __hash__(self):
+        return hash(self.id)
 
     @property
     def json(self):
@@ -40,6 +49,8 @@ class Post(db.Model):
             "likes": self.likes,
             "user": self.user.json,
             "published": self.published,
+            "coordinates": self.coordinates,
+            "position_name": self.position_name,
             "categories": [category.json for category in self.categories],
             "comments": [comment.json for comment in self.comments],
             "attachments": [

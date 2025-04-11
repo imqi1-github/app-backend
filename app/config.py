@@ -3,6 +3,7 @@ from os import getenv
 
 import yaml
 
+
 class ConfigReader:
     def __init__(self, config_dict):
         self._config = config_dict
@@ -20,7 +21,7 @@ class ConfigReader:
 
 
 def load_config(file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         config_data = yaml.load(file, Loader=yaml.SafeLoader)
     return ConfigReader(config_data)
 
@@ -31,6 +32,7 @@ config = load_config(config_file)
 
 # 和风天气API key
 qweather_api_key = config.qweather_api_key
+map_web_api_key = config.map_web_api_key
 logging_file = config.logging_file
 
 env = getenv("ENVIRONMENT", "development")
@@ -44,19 +46,20 @@ match env:
         config = config.production
 
 db_config = config.db
-db_config.password = db_config.password.replace('@', '%40')
+db_config.password = db_config.password.replace("@", "%40")
 
 backend_url = config.backend
 redis_config = config.redis
 print(f"Redis状态：{redis_config}")
 
 # 数据库连接URL
-db_url = f'mysql+pymysql://{db_config.user}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.name}?charset=utf8'
+db_url = f"mysql+pymysql://{db_config.user}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.name}?charset=utf8"
 
 
 class Config:
     SQLALCHEMY_DATABASE_URI = db_url  # 这里可以根据需要换成其他数据库
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 
 def is_redis_on():
     return config.redis.state

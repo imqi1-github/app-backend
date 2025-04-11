@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -144,7 +145,7 @@ def load(key: str) -> any:
             log("WARNING", f"Redis中未找到key={key}")
             return None
         result = pickle.loads(serialized_obj)
-        log("INFO", f"成功从Redis加载对象，key={key}")
+        log("INFO", f"成功从Redis加载对象，key={key}，value={result}")
         return result
     except Exception as e:
         log("ERROR", f"从Redis加载时出错: {str(e)}")

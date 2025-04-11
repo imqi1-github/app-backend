@@ -30,3 +30,4 @@ production:
 
 logging_file: backend.log
 qweather_api_key: 8e331c0c65774fa4bc8e8ac4ef976554
+map_web_api_key: 4e279ff93c2aabe48d6cc772abe7320c

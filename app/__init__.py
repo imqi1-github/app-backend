@@ -1,7 +1,9 @@
 import logging
 import os
+from urllib.parse import unquote
 
-from flask import Flask, render_template, request, send_file, send_from_directory
+from flask import Flask, render_template, send_file
+from flask import send_from_directory, request
 from flask_cors import CORS
 
 from app.blueprints import (
@@ -10,9 +12,11 @@ from app.blueprints import (
     dashboard_blueprint,
     weather_blueprint,
     post_blueprint,
+    map_blueprint,
+    spot_blueprint,
 )
 from app.config import config
-from app.extensions import db, migrate
+from app.extensions import db, migrate, log
 
 app = Flask(__name__)
 
@@ -47,6 +51,8 @@ app.register_blueprint(user_blueprint, url_prefix="/user")
 app.register_blueprint(dashboard_blueprint, url_prefix="/dashboard")
 app.register_blueprint(weather_blueprint, url_prefix="/weather")
 app.register_blueprint(post_blueprint, url_prefix="/post")
+app.register_blueprint(map_blueprint, url_prefix="/map")
+app.register_blueprint(spot_blueprint, url_prefix="/spot")
 
 
 @app.route("/")
@@ -80,8 +86,12 @@ def before_request():
     return
 
 
-@app.route("/download/<filename>", methods=["GET"])
+
+
+@app.route("/download/<path:filename>", methods=["GET"])
 def download_file(filename):
+    filename = filename.replace(" ", "%20")
+    log("INFO", f"filename={filename}")
     return send_from_directory(
-        app.config["UPLOAD_FOLDER"], filename, as_attachment=True
+        app.config["UPLOAD_FOLDER"], filename
     )

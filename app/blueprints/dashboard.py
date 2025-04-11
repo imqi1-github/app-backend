@@ -1,12 +1,24 @@
+import traceback
 from functools import wraps
 
 from flask import Blueprint, request, make_response
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
+from app.api.map import get_coordinates
 from app.constants import UserRole
 from app.extensions import db
-from app.models.user import User
+from app.models import (
+    Comment,
+    Attachment,
+    Relationship,
+    User,
+    Post,
+    UserInformation,
+    Subscribe,
+    Category,
+    Spot,
+)
 
 dashboard_blueprint = Blueprint("dashboard", __name__)
 
@@ -106,4 +118,173 @@ def logout():
 
         return response
     except Exception as e:
+        return {"error": str(e)}, 500
+
+
+@dashboard_blueprint.route("/overview")
+def overview():
+    data = {}
+
+    user_count = db.session.query(func.count(User.id)).scalar()
+    data["user_count"] = user_count
+
+    post_count = db.session.query(func.count(Post.id)).scalar()
+    data["post_count"] = post_count
+
+    comment_count = db.session.query(func.count(Comment.id)).scalar()
+    data["comment_count"] = comment_count
+
+    attachment_count = db.session.query(func.count(Attachment.id)).scalar()
+    data["attachment_count"] = attachment_count
+
+    recent_posts = (
+        db.session.query(Post).order_by(Post.create_time.desc()).limit(8).all()
+    )
+    data["recent_posts"] = [post.json for post in recent_posts]
+
+    recent_users = db.session.query(User).order_by(User.id.desc()).limit(5).all()
+    data["recent_users"] = [user.json for user in recent_users]
+
+    province_statistics = (
+        db.session.query(
+            UserInformation.position_province,
+            func.count(UserInformation.id).label("count"),
+        )
+        .group_by(UserInformation.position_province)
+        .all()
+    )
+    data["province_statistics"] = [
+        {"name": province, "value": count} for province, count in province_statistics
+    ]
+
+    city_statistics = (
+        db.session.query(
+            UserInformation.position_city, func.count(UserInformation.id).label("count")
+        )
+        .group_by(UserInformation.position_city)
+        .all()
+    )
+    data["city_statistics"] = [
+        {"name": city, "value": count} for city, count in city_statistics
+    ]
+
+    top_users = (
+        db.session.query(
+            User.id,
+            User.username,
+            UserInformation.nickname,
+            UserInformation.avatar_path,
+            func.count(Subscribe.subscribed_user_id).label("fan_count"),
+        )
+        .join(Subscribe, User.id == Subscribe.subscribed_user_id)
+        .outerjoin(UserInformation, User.id == UserInformation.user_id)
+        .group_by(User.id, User.username, UserInformation.nickname)
+        .order_by(func.count(Subscribe.subscribed_user_id).desc())
+        .limit(5)
+        .all()
+    )
+
+    data["top_users"] = [
+        {
+            "user_id": user_id,
+            "username": username,
+            "nickname": nickname,
+            "avatar_path": avatar_path,
+            "fan_count": fan_count,
+        }
+        for user_id, username, nickname, avatar_path, fan_count in top_users
+    ]
+
+    top_subscriber = (
+        db.session.query(
+            User.id,
+            User.username,
+            UserInformation.nickname,
+            UserInformation.avatar_path,
+            func.count(Subscribe.user_id).label("subscriber_count"),
+        )
+        .join(Subscribe, User.id == Subscribe.user_id)
+        .outerjoin(UserInformation, User.id == UserInformation.user_id)
+        .group_by(User.id, User.username, UserInformation.nickname)
+        .order_by(func.count(Subscribe.user_id).desc())
+        .limit(5)
+        .all()
+    )
+
+    data["top_subscriber"] = [
+        {
+            "user_id": user_id,
+            "username": username,
+            "nickname": nickname,
+            "avatar_path": avatar_path,
+            "count": count,
+        }
+        for user_id, username, nickname, avatar_path, count in top_subscriber
+    ]
+
+    post_counts = (
+        db.session.query(Category.name, func.count(Relationship.post_id).label("count"))
+        .join(Relationship, Category.id == Relationship.category_id)
+        .group_by(Category.name)
+        .all()
+    )
+
+    data["post_counts"] = [
+        {"name": category_name, "value": count} for category_name, count in post_counts
+    ]
+
+    return data
+
+
+@dashboard_blueprint.route("/spot_new", methods=["POST"])
+def new_spot():
+    data = request.json
+
+    title = data.get("title")
+    if not title:
+        return {"error": "标题不能为空"}
+
+    start_time = data.get("start_time")
+    if not start_time:
+        return {"error": "开始时间不能为空"}
+
+    end_time = data.get("end_time")
+    if not end_time:
+        return {"error": "结束时间不能为空"}
+
+    position = data.get("position")
+    if not position:
+        return {"error": "位置不能为空"}
+
+    coordinates = get_coordinates(position)
+    try:
+        if not coordinates:
+            return {"error": "获取坐标失败"}
+        coordinates = coordinates.get("geocodes")[0].get("location")
+    except:
+        return {"error": "获取坐标失败"}  
+
+    picture = data.get("picture")
+    content = data.get("content")
+    if not content:
+        return {"error": "内容不能为空"}
+
+    try:
+
+        spot = Spot(
+            title=title,
+            start_time=start_time,
+            end_time=end_time,
+            position=position,
+            coordinates=coordinates,
+            pictures=picture,
+            content=content,
+        )
+        db.session.add(spot)
+
+        db.session.commit()
+        return {"msg": "添加成功", "spot_id": spot.id}
+    except Exception as e:
+        traceback.print_exc()
+        db.session.rollback()
         return {"error": str(e)}, 500
