@@ -91,7 +91,7 @@ def before_request():
 @app.route("/download/<path:filename>", methods=["GET"])
 def download_file(filename):
     filename = filename.replace(" ", "%20")
-    log("INFO", f"filename={filename}")
+    # log("INFO", f"filename={filename}")
     return send_from_directory(
         app.config["UPLOAD_FOLDER"], filename
     )

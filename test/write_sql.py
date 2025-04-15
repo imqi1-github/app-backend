@@ -6,7 +6,7 @@ from app.extensions import db
 from app.models import Post, Comment, Category, Relationship, User, UserInformation
 from faker import Faker
 
-from constants import UserRole
+from app.constants import UserRole
 
 # 初始化 Faker，设置为中文
 fake = Faker("zh_CN")
@@ -284,6 +284,6 @@ if __name__ == "__main__":
         # db.create_all()
         db.drop_all()
         main()
-    from rename_image_sql import main
-    with app.app_context():
-        main()
+    # from test.rename_image_sql import main
+    # with app.app_context():
+    #     main()

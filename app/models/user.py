@@ -2,8 +2,8 @@ import random
 import string
 import time
 
+from app.constants import UserRole, UserStatus
 from app.extensions import db
-from app.constants import UserRole
 
 
 class User(db.Model):
@@ -12,6 +12,7 @@ class User(db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password = db.Column(db.String(64), nullable=False)
     role = db.Column(db.String(64), default=UserRole.User)
+    state = db.Column(db.String(15), default=UserStatus.Active.value)
 
     # 关系定义
     information = db.relationship("UserInformation", back_populates="user", lazy=True)
@@ -28,6 +29,7 @@ class User(db.Model):
             "id": self.id,
             "username": self.username,
             "role": self.role,
+            "state": self.state,
             "information": self.information[0].json if len(self.information) else None,
             "uploads": [upload.json for upload in self.uploads],
         }
@@ -40,7 +42,6 @@ class UserInformation(db.Model):
     __tablename__ = "user_information"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True)
-    email = db.Column(db.String(64), default="你还未输入你的邮箱")
     nickname = db.Column(
         db.String(64),
         default=lambda _: "用户昵称" + "".join(random.choices(string.ascii_lowercase, k=8)),
@@ -58,7 +59,6 @@ class UserInformation(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "email": self.email,
             "nickname": self.nickname,
             "position_province": self.position_province,
             "position_city": self.position_city,

@@ -8,3 +8,8 @@ class UserRole(Enum):
 
 class FileType(Enum):
     Image = "image"
+
+
+class UserStatus(Enum):
+    Active = "active"
+    Banned = "banned"
