@@ -28,7 +28,7 @@ def get_nearby_spots(id):
     try:
         lat, lon = map(float, spot.coordinates.split(","))
     except ValueError:
-        return {"error": "坐标格式错误"}, 400
+        return {"error": "坐标格式错误"}
 
     all_spots = Spot.query.all()
     nearby = []

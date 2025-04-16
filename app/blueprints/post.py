@@ -177,7 +177,7 @@ def post_list():
 @post_blueprint.route("/<int:post_id>")
 def get_post(post_id):
     if post_id is None:
-        return {"error": "post_id不能为空"}, 400
+        return {"error": "post_id不能为空"}
 
     post = db.session.query(Post).where(Post.id == post_id).first()
     if post is None:
@@ -209,7 +209,7 @@ def get_categories():
 @post_blueprint.route("/like/<int:post_id>")
 def like_post(post_id):
     if post_id is None:
-        return {"error": "post_id不能为空"}, 400
+        return {"error": "post_id不能为空"}
     post = db.session.query(Post).where(Post.id == post_id).first()
     if post is None:
         return {"error": "帖子不存在"}, 404
@@ -223,9 +223,9 @@ def subscribe():
     user_id = request.json.get("user_id", None)
     subscribed_user_id = request.json.get("subscribed_user_id", None)
     if user_id is None or subscribed_user_id is None:
-        return {"error": "user_id或subscribed_user_id不能为空"}, 400
+        return {"error": "user_id或subscribed_user_id不能为空"}
     if user_id == subscribed_user_id:
-        return {"error": "不能关注自己"}, 400
+        return {"error": "不能关注自己"}
 
     user1 = db.session.query(User).where(User.id == user_id).first()
 
@@ -265,13 +265,13 @@ def comment_post():
     try:
         data = request.json
         if data.get("post_id") is None:
-            return {"error": "post_id不能为空"}, 400
+            return {"error": "post_id不能为空"}
 
         if data.get("user_id") is None:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         if data.get("content") is None or len(data.get("content")) == 0:
-            return {"error": "评论内容不能为空"}, 400
+            return {"error": "评论内容不能为空"}
 
         comment = Comment(
             user_id=data.get("user_id"),
@@ -292,7 +292,7 @@ def comment_post():
 @post_blueprint.route("/comments/<int:post_id>")
 def comments(post_id):
     if post_id is None:
-        return {"error": "post_id不能为空"}, 400
+        return {"error": "post_id不能为空"}
     return {
         "comments": db.session.query(Post)
         .where(Post.id == post_id)
@@ -309,15 +309,15 @@ def new_post():
 
         user_id = data.get("user_id")
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         title = data.get("title")
         if not title:
-            return {"error": "标题不能为空"}, 400
+            return {"error": "标题不能为空"}
 
         content = data.get("content")
         if not content:
-            return {"error": "内容不能为空"}, 400
+            return {"error": "内容不能为空"}
 
         city = data.get("city")
         place = data.get("place")
@@ -375,7 +375,7 @@ def upload_attachment():
 
         content_type = request.headers.get("Content-Type", "")
         if not content_type.startswith("image/"):
-            return {"error": "只允许上传图片"}, 400
+            return {"error": "只允许上传图片"}
 
         with open(filepath, "wb") as f:
             f.write(request.data)
@@ -384,7 +384,7 @@ def upload_attachment():
 
         user_id = get_userid_from_cookie()
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         upload = UserUpload(
             user_id=user_id,
@@ -414,7 +414,7 @@ def delete_attachment():
     try:
         upload_id = request.args.get("id")
         if not upload_id:
-            return {"error": "upload_id不能为空"}, 400
+            return {"error": "upload_id不能为空"}
         upload = db.session.query(UserUpload).where(UserUpload.id == upload_id).first()
         if upload:
             db.session.delete(upload)
@@ -431,7 +431,7 @@ def delete_post():
     try:
         post_id = request.args.get("id")
         if not post_id:
-            return {"error": "post_id不能为    空"}, 400
+            return {"error": "post_id不能为    空"}
         post = db.session.query(Post).where(Post.id == post_id).first()
         if post:
             db.session.delete(post)
@@ -476,7 +476,7 @@ def edit_post():
 
         post_id = data.get("id")
         if not post_id:
-            return {"error": "id不能为空"}, 400
+            return {"error": "id不能为空"}
 
         post = db.session.query(Post).where(Post.id == post_id).first()
         if not post:
@@ -484,15 +484,15 @@ def edit_post():
 
         user_id = data.get("user_id")
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         title = data.get("title")
         if not title:
-            return {"error": "标题不能为空"}, 400
+            return {"error": "标题不能为空"}
 
         content = data.get("content")
         if not content:
-            return {"error": "内容不能为空"}, 400
+            return {"error": "内容不能为空"}
 
         city = data.get("city")
         place = data.get("place")
@@ -542,7 +542,7 @@ def edit_post():
 def search():
     keywords = request.args.get("keywords")
     if not keywords:
-        return {"error": "keywords不能为空"}, 400
+        return {"error": "keywords不能为空"}
 
     search_cache = load("search_cache")
 

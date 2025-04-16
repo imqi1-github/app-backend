@@ -8,7 +8,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlalchemy import and_
 
 from app.config import backend_url
-from app.constants import UserRole, FileType
+from app.constants import UserRole, FileType, UserStatus
 from app.extensions import db, is_redis_on, load, save, log
 from app.models.post import Subscribe, Post
 from app.models.user import User, UserUpload, UserInformation
@@ -60,6 +60,11 @@ def login_required(f):
             response.delete_cookie("user_id")
             return response
 
+        if user.state == UserStatus.Banned.value:
+            response = make_response({"error": "用户状态异常"})
+            response.delete_cookie("user_id")
+            return response
+
         return f(*args, **kwargs)
 
     return decorated_function
@@ -102,10 +107,10 @@ def login():
     args = request.json
     username = args.get("username")
     if not username:
-        return {"error": "必须填写用户名"}, 400
+        return {"error": "必须填写用户名"}
     password = args.get("password")
     if not password:
-        return {"error": "必须填写密码"}, 400
+        return {"error": "必须填写密码"}
 
     try:
         user = (
@@ -114,9 +119,10 @@ def login():
             .first()
         )
         if not user:
-            return {"error": "用户名或密码填写错误"}, 400
+            return {"error": "用户名或密码填写错误"}
+        if user.state == UserStatus.Banned.value:
+            return {"error": "用户状态异常"}
 
-        print(user)
         response = make_response({"msg": "登录成功", "user": user.json})
 
         encrypted_user_id = serializer.dumps(str(user.id))
@@ -170,13 +176,13 @@ def upload_avatar():
 
         content_type = request.headers.get("Content-Type", "")
         if not content_type.startswith("image/"):
-            return {"error": "只允许上传图片"}, 400
+            return {"error": "只允许上传图片"}
 
         filename, filepath, upload_time = upload_file(filename, request.data)
 
         user_id = get_userid_from_cookie()
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         upload = (
             db.session.query(UserUpload).where(UserUpload.filepath == filepath).all()
@@ -232,13 +238,13 @@ def upload():
 
         content_type = request.headers.get("Content-Type", "")
         if not content_type.startswith("image/"):
-            return {"error": "只允许上传图片"}, 400
+            return {"error": "只允许上传图片"}
 
         filename, filepath, upload_time = upload_file(filename, request.data)
 
         user_id = get_userid_from_cookie()
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         upload = (
             db.session.query(UserUpload).where(UserUpload.filepath == filepath).first()
@@ -282,7 +288,7 @@ def my_uploads():
     try:
         user_id = get_userid_from_cookie()
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         uploads = (
             db.session.query(UserUpload).where(UserUpload.user_id == user_id).all()
@@ -301,14 +307,14 @@ def set_nickname():
     try:
         nickname = request.json.get("nickname", None)
         if not nickname:
-            return {"error": "必须填写昵称"}, 400
+            return {"error": "必须填写昵称"}
 
         if len(nickname) > 64:
-            return {"error": "昵称长度不能超过64"}, 400
+            return {"error": "昵称长度不能超过64"}
 
         user_id = request.json.get("user_id", None) or get_userid_from_cookie()
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         user = (
             db.session.query(UserInformation)
@@ -336,11 +342,11 @@ def set_position():
 
         city = request.json.get("city", None)
         if not city:
-            return {"error": "必须填写市名称"}, 400
+            return {"error": "必须填写市名称"}
 
         user_id = request.json.get("user_id", None) or get_userid_from_cookie()
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
 
         user = (
             db.session.query(UserInformation)
@@ -366,7 +372,7 @@ def get_user_information():
         user_id = get_userid_from_cookie()
 
     if not user_id:
-        return {"error": "user_id不能为空"}, 400
+        return {"error": "user_id不能为空"}
 
     log("INFO", f"获取信息 API，'user_id: '{user_id}")
 
@@ -421,7 +427,7 @@ def delete_upload():
     try:
         upload_id = request.args.get("id")
         if not upload_id:
-            return {"error": "upload_id不能为空"}, 400
+            return {"error": "upload_id不能为空"}
 
         db.session.delete(db.session.query(UserUpload).where(UserUpload.id == upload_id).first())
         db.session.commit()

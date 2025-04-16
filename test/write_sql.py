@@ -2,11 +2,11 @@ import random
 import time
 
 import pandas as pd
-from app.extensions import db
-from app.models import Post, Comment, Category, Relationship, User, UserInformation
 from faker import Faker
 
 from app.constants import UserRole
+from app.extensions import db
+from app.models import Post, Comment, Category, Relationship, User, UserInformation
 
 # 初始化 Faker，设置为中文
 fake = Faker("zh_CN")

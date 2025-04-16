@@ -20,7 +20,7 @@ class Post(db.Model):
     position_name = db.Column(db.String(64))
     user = db.relationship("User", back_populates="posts")
     comments = db.relationship("Comment", back_populates="post", cascade="all, delete-orphan")
-    published = db.Column(db.Integer, default=0)
+    published = db.Column(db.Integer, default=1)
     categories = db.relationship(
         "Category", secondary="relationship", back_populates="posts"
     )

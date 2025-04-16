@@ -47,6 +47,8 @@ def login_required(f):
         user = db.session.query(User).where(User.id == user_id).first()
         if not user:
             return {"error": "用户不存在"}, 403
+        if user.state == UserStatus.Banned.value:
+            return {"error": "用户状态异常"}, 403
         if not user.role != UserRole.Admin:
             return {"error": "用户权限不足"}, 403
 
@@ -237,6 +239,10 @@ def overview():
         {"name": category_name, "value": count} for category_name, count in post_counts
     ]
 
+    spots_count = db.session.query(func.count(Spot.id)).scalar()
+
+    data["spots_count"] = spots_count
+
     return data
 
 
@@ -400,7 +406,7 @@ def delete_spot():
     try:
         spot_id = request.args.get("spot_id")
         if not spot_id:
-            return {"error": "spot_id不能为空"}, 400
+            return {"error": "spot_id不能为空"}
         spot = db.session.query(Spot).where(Spot.id == spot_id).first()
         db.session.delete(spot)
         db.session.commit()
@@ -432,7 +438,7 @@ def post_set_unpublished():
     try:
         post_id = request.args.get("id")
         if not post_id:
-            return {"error": "post_id不能为空"}, 400
+            return {"error": "post_id不能为空"}
         post = db.session.query(Post).where(Post.id == post_id).first()
         post.published = not post.published
         db.session.commit()
@@ -464,7 +470,7 @@ def set_user_state():
     try:
         user_id = request.args.get("id")
         if not user_id:
-            return {"error": "user_id不能为空"}, 400
+            return {"error": "user_id不能为空"}
         user = db.session.query(User).where(User.id == user_id).first()
         user.state = UserStatus.Active.value if user.state == UserStatus.Banned.value else UserStatus.Banned.value
         db.session.commit()
@@ -480,7 +486,7 @@ def set_user():
     try:
         data = request.json
         if not data.get("id"):
-            return {"error": "id不能为空"}, 400
+            return {"error": "id不能为空"}
         user = db.session.query(User).where(User.id == data.get("id")).first()
         user.username = data.get("username")
         user.password = data.get("password")
@@ -488,7 +494,7 @@ def set_user():
         user.state = data.get("state")
 
         if not data.get("information_id"):
-            return {"error": "information_id不能为空"}, 400
+            return {"error": "information_id不能为空"}
         information = db.session.query(UserInformation).where(UserInformation.id == data.get("information_id")).first()
         information.nickname = data.get("nickname")
         information.position_province = data.get("position_province")
@@ -507,7 +513,7 @@ def set_user():
 def get_user():
     user_id = request.args.get("id")
     if not user_id:
-        return {"error": "id不能为空"}, 400
+        return {"error": "id不能为空"}
     user = db.session.query(User).where(User.id == user_id).first()
     password = db.session.query(User.password).where(User.id == user_id).scalar()
     if not user:
@@ -520,21 +526,21 @@ def new_user():
     try:
         data = request.json
         if not data.get("username"):
-            return {"error": "username不能为空"}, 400
+            return {"error": "username不能为空"}
         if not data.get("password"):
-            return {"error": "password不能为空"}, 400
+            return {"error": "password不能为空"}
         if not data.get("role"):
-            return {"error": "role不能为空"}, 400
+            return {"error": "role不能为空"}
         if not data.get("state"):
-            return {"error": "state不能为空"}, 400
+            return {"error": "state不能为空"}
         if not data.get("nickname"):
-            return {"error": "nickname不能为空"}, 400
+            return {"error": "nickname不能为空"}
         if not data.get("position_province"):
-            return {"error": "position_province不能为空"}, 400
+            return {"error": "position_province不能为空"}
         if not data.get("position_city"):
-            return {"error": "position_city不能为空"}, 400
+            return {"error": "position_city不能为空"}
         if not data.get("avatar_path"):
-            return {"error": "avatar_path不能为空"}, 400
+            return {"error": "avatar_path不能为空"}
         user = User(
             username=data.get("username"),
             password=data.get("password"),
