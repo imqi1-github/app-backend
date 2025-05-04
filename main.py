@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from app import app
 from app.extensions import db, log
-from app.models import User, UserInformation
+from app.models import User, Information
 
 if __name__ == "__main__":
     with app.app_context():
@@ -21,7 +21,7 @@ if __name__ == "__main__":
                 )
                 db.session.add(user)
                 db.session.add(
-                    UserInformation(
+                    Information(
                         user_id=1,
                         email="example@email.com",
                     )

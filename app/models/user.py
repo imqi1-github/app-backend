@@ -9,14 +9,14 @@ from app.extensions import db
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    password = db.Column(db.String(64), nullable=False)
-    role = db.Column(db.String(64), default=UserRole.User)
-    state = db.Column(db.String(15), default=UserStatus.Active.value)
+    username = db.Column(db.String(32), unique=True, nullable=False)
+    password = db.Column(db.String(32), nullable=False)
+    role = db.Column(db.String(8), default=UserRole.User)
+    state = db.Column(db.String(10), default=UserStatus.Active.value)
 
     # 关系定义
-    information = db.relationship("UserInformation", back_populates="user", lazy=True)
-    uploads = db.relationship("UserUpload", back_populates="user", lazy=True)
+    information = db.relationship("Information", back_populates="user", lazy=True)
+    uploads = db.relationship("Upload", back_populates="user", lazy=True)
     posts = db.relationship("Post", back_populates="user", lazy=True)
     comments = db.relationship("Comment", back_populates="user", lazy=True)  # 新增 comments 关系
 
@@ -38,21 +38,21 @@ class User(db.Model):
         return self.json
 
 
-class UserInformation(db.Model):
-    __tablename__ = "user_information"
+class Information(db.Model):
+    __tablename__ = "information"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True)
     nickname = db.Column(
-        db.String(64),
+        db.String(32),
         default=lambda _: "用户昵称" + "".join(random.choices(string.ascii_lowercase, k=8)),
     )
     position_province = db.Column(db.String(32), default="河北省")
     position_city = db.Column(db.String(32), default="秦皇岛市")
-    avatar_path = db.Column(db.String(512), default="/img/default_avatar.png")
+    avatar_path = db.Column(db.String(128), default="/img/default_avatar.png")
     user = db.relationship("User", back_populates="information")
 
     def __repr__(self):
-        return "<UserInformation %r>" % self.id
+        return "<Information %r>" % self.id
 
     @property
     def json(self):
@@ -69,19 +69,19 @@ class UserInformation(db.Model):
         return self.json
 
 
-class UserUpload(db.Model):
-    __tablename__ = "user_upload"
+class Upload(db.Model):
+    __tablename__ = "upload"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    filename = db.Column(db.String(256), nullable=False)
+    filename = db.Column(db.String(64), nullable=False)
     filetype = db.Column(db.String(16), nullable=False)
-    filepath = db.Column(db.String(512), nullable=False)
+    filepath = db.Column(db.String(128), nullable=False)
     upload_time = db.Column(db.Integer, nullable=False, default=time.time())
-    comment = db.Column(db.String(256))
+    comment = db.Column(db.String(24))
     user = db.relationship("User", back_populates="uploads")
 
     def __repr__(self):
-        return "<UserUpload %r>" % self.filename
+        return "<Upload %r>" % self.filename
 
     @property
     def json(self):

@@ -11,7 +11,7 @@ from app.config import backend_url
 from app.constants import UserRole, FileType, UserStatus
 from app.extensions import db, is_redis_on, load, save, log
 from app.models.post import Subscribe, Post
-from app.models.user import User, UserUpload, UserInformation
+from app.models.user import User, Upload, Information
 
 user_blueprint = Blueprint("user", __name__)
 
@@ -89,7 +89,7 @@ def register_user():
             password=password,
             role=role,
         )
-        information = UserInformation(
+        information = Information(
             user=user,
         )
         db.session.add(user)
@@ -185,7 +185,7 @@ def upload_avatar():
             return {"error": "user_id不能为空"}
 
         upload = (
-            db.session.query(UserUpload).where(UserUpload.filepath == filepath).all()
+            db.session.query(Upload).where(Upload.filepath == filepath).all()
         )
         if len(upload):
             upload[0].filename = filename
@@ -194,7 +194,7 @@ def upload_avatar():
 
         else:
             db.session.add(
-                UserUpload(
+                Upload(
                     user_id=user_id,
                     filename=filename,
                     filepath=filepath,
@@ -203,14 +203,14 @@ def upload_avatar():
             )
 
         information = (
-            db.session.query(UserInformation)
-            .where(UserInformation.user_id == user_id)
+            db.session.query(Information)
+            .where(Information.user_id == user_id)
             .all()
         )
         if len(information):
             information[0].avatar_path = filepath
         else:
-            db.session.add(UserInformation(user_id=user_id, avatar_path=filepath))
+            db.session.add(Information(user_id=user_id, avatar_path=filepath))
 
         db.session.commit()
 
@@ -247,7 +247,7 @@ def upload():
             return {"error": "user_id不能为空"}
 
         upload = (
-            db.session.query(UserUpload).where(UserUpload.filepath == filepath).first()
+            db.session.query(Upload).where(Upload.filepath == filepath).first()
         )
         if upload:
             upload.filename = filename
@@ -255,7 +255,7 @@ def upload():
             upload.upload_time = time.time()
 
         else:
-            upload = UserUpload(
+            upload = Upload(
                 user_id=user_id,
                 filename=filename,
                 filepath=filepath,
@@ -291,7 +291,7 @@ def my_uploads():
             return {"error": "user_id不能为空"}
 
         uploads = (
-            db.session.query(UserUpload).where(UserUpload.user_id == user_id).all()
+            db.session.query(Upload).where(Upload.user_id == user_id).all()
         )
 
         return {"msg": "获取成功", "uploads": [upload.json for upload in uploads]}
@@ -317,8 +317,8 @@ def set_nickname():
             return {"error": "user_id不能为空"}
 
         user = (
-            db.session.query(UserInformation)
-            .where(UserInformation.user_id == user_id)
+            db.session.query(Information)
+            .where(Information.user_id == user_id)
             .first()
         )
         user.nickname = nickname
@@ -349,8 +349,8 @@ def set_position():
             return {"error": "user_id不能为空"}
 
         user = (
-            db.session.query(UserInformation)
-            .where(UserInformation.user_id == user_id)
+            db.session.query(Information)
+            .where(Information.user_id == user_id)
             .first()
         )
         user.position_province = province
@@ -388,8 +388,8 @@ def get_user_information():
         return {"error": "用户不存在"}, 404
 
     information = (
-        db.session.query(UserInformation)
-        .where(UserInformation.user_id == user_id)
+        db.session.query(Information)
+        .where(Information.user_id == user_id)
         .first()
     )
 
@@ -421,21 +421,3 @@ def get_user_information():
 
     log("INFO", f"获取信息 API，result: {result}")
     return result
-
-@user_blueprint.route("/delete-upload")
-def delete_upload():
-    try:
-        upload_id = request.args.get("id")
-        if not upload_id:
-            return {"error": "upload_id不能为空"}
-
-        db.session.delete(db.session.query(UserUpload).where(UserUpload.id == upload_id).first())
-        db.session.commit()
-
-        return {
-            "msg": "删除成功",
-        }, 200
-    except Exception as e:
-        traceback.print_exc()
-        db.session.rollback()
-        return {"error": str(e)}, 500

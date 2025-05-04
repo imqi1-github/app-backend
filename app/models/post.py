@@ -7,7 +7,7 @@ class Post(db.Model):
     __tablename__ = "post"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    title = db.Column(db.String(256), nullable=False)
+    title = db.Column(db.String(32), nullable=False)
     content = db.Column(db.Text, nullable=False)
     create_time = db.Column(
         db.Integer, nullable=False, default=lambda: int(time.time())
@@ -16,8 +16,8 @@ class Post(db.Model):
         db.Integer, nullable=False, default=lambda: int(time.time())
     )
     likes = db.Column(db.Integer, default=0)
-    coordinates = db.Column(db.String(32))
-    position_name = db.Column(db.String(64))
+    coordinates = db.Column(db.String(24))
+    position_name = db.Column(db.String(32))
     user = db.relationship("User", back_populates="posts")
     comments = db.relationship("Comment", back_populates="post", cascade="all, delete-orphan")
     published = db.Column(db.Integer, default=1)
@@ -96,8 +96,8 @@ class Comment(db.Model):
 class Category(db.Model):
     __tablename__ = "category"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), nullable=False)
-    description = db.Column(db.String(256))
+    name = db.Column(db.String(16), nullable=False)
+    description = db.Column(db.String(64))
     posts = db.relationship(
         "Post", secondary="relationship", back_populates="categories"
     )
@@ -136,8 +136,8 @@ class Attachment(db.Model):
     __tablename__ = "attachment"
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=False)
-    file_name = db.Column(db.String(256), nullable=False)
-    file_path = db.Column(db.String(512), nullable=False)
+    file_name = db.Column(db.String(64), nullable=False)
+    file_path = db.Column(db.String(128), nullable=False)
     file_type = db.Column(db.String(16), nullable=False)
     create_time = db.Column(
         db.Integer, nullable=False, default=lambda: int(time.time())

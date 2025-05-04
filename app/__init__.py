@@ -14,6 +14,7 @@ from app.blueprints import (
     post_blueprint,
     map_blueprint,
     spot_blueprint,
+    ai_blueprint
 )
 from app.config import config
 from app.extensions import db, migrate, log
@@ -53,6 +54,7 @@ app.register_blueprint(weather_blueprint, url_prefix="/weather")
 app.register_blueprint(post_blueprint, url_prefix="/post")
 app.register_blueprint(map_blueprint, url_prefix="/map")
 app.register_blueprint(spot_blueprint, url_prefix="/spot")
+app.register_blueprint(ai_blueprint, url_prefix="/ai")
 
 
 @app.route("/")
@@ -82,7 +84,7 @@ def before_request():
         # return response
         return
     if not referer.startswith(config.frontend):
-        return "", 403
+        return ""
     return
 
 

@@ -34,6 +34,8 @@ config = load_config(config_file)
 qweather_api_key = config.qweather_api_key
 map_web_api_key = config.map_web_api_key
 logging_file = config.logging_file
+ai_url = config.ai_url
+model = config.model
 
 env = getenv("ENVIRONMENT", "development")
 

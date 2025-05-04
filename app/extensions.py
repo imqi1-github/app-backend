@@ -1,14 +1,17 @@
+import inspect
+import json
 import logging
 import os
-import sys
-from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from redis import StrictRedis
 import pickle
-from app.config import redis_config, is_redis_on, logging_file
-import inspect
+from datetime import datetime
 from typing import Literal
+
+import requests
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from redis import StrictRedis
+
+from app.config import redis_config, is_redis_on, logging_file, ai_url, model
 
 
 # 定义颜色代码
@@ -23,7 +26,6 @@ class Colors:
 # 初始化 Flask 扩展
 db = SQLAlchemy()
 migrate = Migrate()
-
 
 # 允许的日志级别类型
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR"]
@@ -150,3 +152,32 @@ def load(key: str) -> any:
     except Exception as e:
         log("ERROR", f"从Redis加载时出错: {str(e)}")
         return None
+
+
+def is_ollama_on():
+    return requests.get(ai_url).ok
+
+
+def generate(prompt: str, max_length: int = 500):
+    if not is_ollama_on():
+        log("ERROR", "Ollama未启动")
+        raise Exception("Ollama未启动")
+
+    data = {
+        "model": model,
+        "prompt": prompt,
+        "max_tokens": max_length,
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "stream": True,
+    }
+
+    response = requests.post(f'{ai_url}/api/generate', json=data, stream=True)
+
+    for line in response.iter_lines(decode_unicode=True):
+        if line.strip():
+            try:
+                obj = json.loads(line)
+                yield obj.get("response", "")
+            except Exception as e:
+                log("ERROR", f"解析JSON失败: {e}")

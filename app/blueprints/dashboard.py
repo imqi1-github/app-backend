@@ -15,7 +15,7 @@ from app.models import (
     Relationship,
     User,
     Post,
-    UserInformation,
+    Information,
     Subscribe,
     Category,
     Spot,
@@ -23,11 +23,11 @@ from app.models import (
 
 dashboard_blueprint = Blueprint("dashboard", __name__)
 
-serializer = URLSafeTimedSerializer("admin-user-key")
+serializer = URLSafeTimedSerializer("user-key")
 
 
 def get_userid_by_cookie():
-    user_id_cookie = request.cookies.get("admin_userid")
+    user_id_cookie = request.cookies.get("user_id")
     if not user_id_cookie:
         return None
     try:
@@ -40,17 +40,16 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         user_id = get_userid_by_cookie()
-
         if not user_id:
-            return {"error": "用户未登录或登录状态过期"}, 403
+            return {"error": "用户未登录或登录状态过期"}
         # 查询数据库验证用户是否存在
         user = db.session.query(User).where(User.id == user_id).first()
         if not user:
-            return {"error": "用户不存在"}, 403
+            return {"error": "用户不存在"}
         if user.state == UserStatus.Banned.value:
-            return {"error": "用户状态异常"}, 403
+            return {"error": "用户状态异常"}
         if not user.role != UserRole.Admin:
-            return {"error": "用户权限不足"}, 403
+            return {"error": "用户权限不足"}
 
         # 将解密的user_id和用户对象作为参数传递给被装饰的函数
         return f(*args, **kwargs)
@@ -69,8 +68,8 @@ def login():
         return {"error": "必须填写密码"}
 
     try:
-        id = (
-            db.session.query(User.id)
+        user = (
+            db.session.query(User)
             .where(
                 and_(
                     User.username == username,
@@ -80,15 +79,15 @@ def login():
             )
             .first()
         )
-        if not id:
+        if not user:
             return {"error": "用户名或密码填写错误"}
 
-        response = make_response({"msg": "登录成功"})
+        response = make_response({"msg": "登录成功", 'user': user.json})
 
-        encrypted_user_id = serializer.dumps(str(id[0]))
+        encrypted_user_id = serializer.dumps(str(user.id))
 
         response.set_cookie(
-            "admin_userid",
+            "user_id",
             encrypted_user_id,
             max_age=60 * 60 * 24 * 3,
             httponly=True,
@@ -98,6 +97,7 @@ def login():
 
         return response
     except Exception as e:
+        traceback.print_exc()
         db.session.rollback()
         return {"error": str(e)}, 500
 
@@ -117,7 +117,7 @@ def logout():
     try:
         response = make_response({"msg": "退出登录成功"})
 
-        response.delete_cookie("admin_userid", secure=True, samesite="None")
+        response.delete_cookie("user_id", secure=True, samesite="None")
 
         return response
     except Exception as e:
@@ -153,10 +153,10 @@ def overview():
 
     province_statistics = (
         db.session.query(
-            UserInformation.position_province,
-            func.count(UserInformation.id).label("count"),
+            Information.position_province,
+            func.count(Information.id).label("count"),
         )
-        .group_by(UserInformation.position_province)
+        .group_by(Information.position_province)
         .all()
     )
     data["province_statistics"] = [
@@ -165,9 +165,9 @@ def overview():
 
     city_statistics = (
         db.session.query(
-            UserInformation.position_city, func.count(UserInformation.id).label("count")
+            Information.position_city, func.count(Information.id).label("count")
         )
-        .group_by(UserInformation.position_city)
+        .group_by(Information.position_city)
         .all()
     )
     data["city_statistics"] = [
@@ -178,13 +178,13 @@ def overview():
         db.session.query(
             User.id,
             User.username,
-            UserInformation.nickname,
-            UserInformation.avatar_path,
+            Information.nickname,
+            Information.avatar_path,
             func.count(Subscribe.subscribed_user_id).label("fan_count"),
         )
         .join(Subscribe, User.id == Subscribe.subscribed_user_id)
-        .outerjoin(UserInformation, User.id == UserInformation.user_id)
-        .group_by(User.id, User.username, UserInformation.nickname)
+        .outerjoin(Information, User.id == Information.user_id)
+        .group_by(User.id, User.username, Information.nickname)
         .order_by(func.count(Subscribe.subscribed_user_id).desc())
         .limit(5)
         .all()
@@ -205,13 +205,13 @@ def overview():
         db.session.query(
             User.id,
             User.username,
-            UserInformation.nickname,
-            UserInformation.avatar_path,
+            Information.nickname,
+            Information.avatar_path,
             func.count(Subscribe.user_id).label("subscriber_count"),
         )
         .join(Subscribe, User.id == Subscribe.user_id)
-        .outerjoin(UserInformation, User.id == UserInformation.user_id)
-        .group_by(User.id, User.username, UserInformation.nickname)
+        .outerjoin(Information, User.id == Information.user_id)
+        .group_by(User.id, User.username, Information.nickname)
         .order_by(func.count(Subscribe.user_id).desc())
         .limit(5)
         .all()
@@ -246,7 +246,7 @@ def overview():
     return data
 
 
-@dashboard_blueprint.route("/spot_new", methods=["POST"])
+@dashboard_blueprint.route("/spot/new", methods=["POST"])
 def new_spot():
     data = request.json
 
@@ -315,7 +315,7 @@ def new_spot():
         return ({"error": str(e)}, 500)
 
 
-@dashboard_blueprint.route("/spot_edit", methods=["POST"])
+@dashboard_blueprint.route("/spot/edit", methods=["POST"])
 def edit_spot():
     data = request.json
 
@@ -387,7 +387,7 @@ def edit_spot():
         return {"error": str(e)}, 500
 
 
-@dashboard_blueprint.route("/spot-list")
+@dashboard_blueprint.route("/spot/list")
 def spot_list():
     spots_count = db.session.query(func.count(Spot.id)).scalar()
     page = request.args.get("page", 1, type=int)
@@ -401,7 +401,7 @@ def spot_list():
     }
 
 
-@dashboard_blueprint.route("/spot-delete")
+@dashboard_blueprint.route("/spot/delete")
 def delete_spot():
     try:
         spot_id = request.args.get("spot_id")
@@ -417,7 +417,7 @@ def delete_spot():
         return {"error": str(e)}, 500
 
 
-@dashboard_blueprint.route("/post-list")
+@dashboard_blueprint.route("/post/list")
 def post_list():
     posts_count = db.session.query(func.count(Post.id)).scalar()
     not_published = db.session.query(func.count(Post.id)).where(Post.published == 0).scalar()
@@ -433,7 +433,7 @@ def post_list():
     }
 
 
-@dashboard_blueprint.route("/post_set_publish")
+@dashboard_blueprint.route("/post/set_publish")
 def post_set_unpublished():
     try:
         post_id = request.args.get("id")
@@ -449,7 +449,7 @@ def post_set_unpublished():
         return {"error": str(e)}, 500
 
 
-@dashboard_blueprint.route("/user_list")
+@dashboard_blueprint.route("/user/list")
 def get_users():
     users_list = db.session.query(func.count(User.id)).scalar()
     page = request.args.get("page", 1, type=int)
@@ -465,7 +465,7 @@ def get_users():
     }
 
 
-@dashboard_blueprint.route("/set_user_state")
+@dashboard_blueprint.route("/user/set_state")
 def set_user_state():
     try:
         user_id = request.args.get("id")
@@ -481,7 +481,7 @@ def set_user_state():
         return {"error": str(e)}, 500
 
 
-@dashboard_blueprint.route("/set_user", methods=["POST"])
+@dashboard_blueprint.route("/user/set", methods=["POST"])
 def set_user():
     try:
         data = request.json
@@ -495,7 +495,7 @@ def set_user():
 
         if not data.get("information_id"):
             return {"error": "information_id不能为空"}
-        information = db.session.query(UserInformation).where(UserInformation.id == data.get("information_id")).first()
+        information = db.session.query(Information).where(Information.id == data.get("information_id")).first()
         information.nickname = data.get("nickname")
         information.position_province = data.get("position_province")
         information.position_city = data.get("position_city")
@@ -509,7 +509,7 @@ def set_user():
         return {"error": str(e)}, 500
 
 
-@dashboard_blueprint.route("/get_user")
+@dashboard_blueprint.route("/user/get")
 def get_user():
     user_id = request.args.get("id")
     if not user_id:
@@ -521,7 +521,7 @@ def get_user():
     return {**user.json, "password": password}
 
 
-@dashboard_blueprint.route("/new_user", methods=["POST"])
+@dashboard_blueprint.route("/user/new", methods=["POST"])
 def new_user():
     try:
         data = request.json
@@ -547,7 +547,7 @@ def new_user():
             role=data.get("role"),
             state=data.get("state"),
         )
-        information = UserInformation(
+        information = Information(
             nickname=data.get("nickname"),
             position_province=data.get("position_province"),
             position_city=data.get("position_city"),
@@ -560,4 +560,37 @@ def new_user():
     except Exception as e:
         db.session.rollback()
         traceback.print_exc()
+        return {"error": str(e)}, 500
+
+
+@dashboard_blueprint.route("/comment/list")
+def get_comments():
+    comments_count = db.session.query(func.count(Comment.id)).scalar()
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    comments = db.session.query(Comment).order_by(Comment.id.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    return {
+        "comments_count": comments_count,
+        "comments": [comment.json for comment in comments],
+        "pages": math.ceil(comments_count / per_page),
+    }
+
+
+@dashboard_blueprint.route("/comment/delete")
+def delete_comment():
+    try:
+        comment_id = request.args.get("id")
+        if not comment_id:
+            return {"error": "comment_id不能为空"}
+
+        db.session.delete(db.session.query(Comment).where(Comment.id == comment_id).first())
+        db.session.commit()
+
+        return {
+            "msg": "删除成功",
+        }, 200
+    except Exception as e:
+        traceback.print_exc()
+        db.session.rollback()
         return {"error": str(e)}, 500

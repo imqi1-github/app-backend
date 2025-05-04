@@ -41,7 +41,7 @@ with app.app_context():
 
 print(f"已添加{count}名用户")
 
-from app.models import UserInformation
+from app.models import Information
 
 from pathlib import Path
 from shutil import copy
@@ -187,12 +187,12 @@ cities.extend(["郑州市"] * (count - len(cities)))
 informations = []
 
 for index, (nickname, provinces, cities, avatar) in enumerate(zip(nicknames, provinces, cities, avatars)):
-    information = UserInformation(
+    information = Information(
         user_id=index + 1,
         nickname=nickname,
         position_province=provinces,
         position_city=cities,
-        avatar_path=f"https://backend-demo.qi1.website/download/{avatar.name}"
+        avatar_path=f"https://localhost:5000/download/{avatar.name}"
     )
     informations.append(information)
 
@@ -265,7 +265,7 @@ coordinates = [
 ]
 
 image_folder = "./images2"
-image_url_prefix = "https://backend-demo.qi1.website/download/"
+image_url_prefix = "https://localhost:5000/download/"
 content = """**{title}**位于{position}，是一个集自然景观与人文历史于一体的旅游景点。
 
 ## 主要特色

@@ -4,7 +4,7 @@ from app.extensions import db
 class Spot(db.Model):
     __tablename__ = "spot"
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(32), nullable=False)
+    title = db.Column(db.String(16), nullable=False)
     good = db.Column(db.Integer, default=0)
     bad = db.Column(db.Integer, default=0)
     start_time = db.Column(db.Time)
@@ -13,8 +13,8 @@ class Spot(db.Model):
     province = db.Column(db.String(16))
     city = db.Column(db.String(16))
     place = db.Column(db.String(16))
-    coordinates = db.Column(db.String(32))
-    pictures = db.Column(db.String(1024))
+    coordinates = db.Column(db.String(25))
+    pictures = db.Column(db.String(640))
     views = db.Column(db.Integer, default=0)
     content = db.Column(db.Text)
 

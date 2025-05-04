@@ -5,3 +5,4 @@ from app.blueprints.weather import weather_blueprint
 from app.blueprints.post import post_blueprint
 from app.blueprints.map import map_blueprint
 from app.blueprints.spot import spot_blueprint
+from app.blueprints.ai import ai_blueprint

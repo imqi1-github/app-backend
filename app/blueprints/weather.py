@@ -39,7 +39,7 @@ def get_coordinates():
     return {"lat": result[0], "lon": result[1]}
 
 
-@weather_blueprint.route("/now", methods=["GET", "POST"])
+@weather_blueprint.route("/now", methods=["GET"])
 @print_blanks
 def weather_now():
     """
@@ -63,7 +63,7 @@ def weather_now():
     return result
 
 
-@weather_blueprint.route("/forecast-daily", methods=["GET", "POST"])
+@weather_blueprint.route("/forecast-daily", methods=["GET"])
 @print_blanks
 def weather_forecast():
     """
@@ -91,7 +91,7 @@ def weather_forecast():
     return result
 
 
-@weather_blueprint.route("/forecast-hourly", methods=["GET", "POST"])
+@weather_blueprint.route("/forecast-hourly", methods=["GET"])
 @print_blanks
 def weather_forecast_hourly():
     """
@@ -115,7 +115,7 @@ def weather_forecast_hourly():
     return result
 
 
-@weather_blueprint.route("/air-quality-current", methods=["GET", "POST"])
+@weather_blueprint.route("/air-quality-current", methods=["GET"])
 @print_blanks
 def air_quality_current():
     """
@@ -141,7 +141,7 @@ def air_quality_current():
     return result
 
 
-@weather_blueprint.route("/air-quality-daily", methods=["GET", "POST"])
+@weather_blueprint.route("/air-quality-daily", methods=["GET"])
 @print_blanks
 def air_quality_daily():
     """
@@ -165,7 +165,7 @@ def air_quality_daily():
     return result
 
 
-@weather_blueprint.route("/minutely-precipitation", methods=["GET", "POST"])
+@weather_blueprint.route("/minutely-precipitation", methods=["GET"])
 @print_blanks
 def minutely_precipitation():
     """
@@ -192,7 +192,7 @@ def minutely_precipitation():
     return result
 
 
-@weather_blueprint.route("/get_indices", methods=["GET", "POST"])
+@weather_blueprint.route("/get_indices", methods=["GET"])
 @print_blanks
 def get_indices_forecast():
     """
@@ -216,7 +216,7 @@ def get_indices_forecast():
     return result
 
 
-@weather_blueprint.route("/get_indices_daily", methods=["GET", "POST"])
+@weather_blueprint.route("/get_indices_daily", methods=["GET"])
 @print_blanks
 def get_indices_daily_forecast():
     """

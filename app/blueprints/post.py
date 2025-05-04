@@ -7,7 +7,7 @@ import time
 import traceback
 
 import jieba
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from sqlalchemy import and_
 
@@ -15,7 +15,7 @@ from app.api.map import get_coordinates
 from app.config import backend_url
 from app.extensions import db, log, load
 from app.hook import search_index
-from app.models import UserUpload
+from app.models import Upload
 from app.models.post import Post, Category, Subscribe, Comment, Attachment
 from app.models.user import User
 
@@ -39,58 +39,34 @@ def get_userid_from_cookie():
 @post_blueprint.route("/list")
 def post_list():
     try:
-        # 获取查询参数
-        page = request.args.get("page", 1, type=int)  # 默认第 1 页
         category_id = request.args.get("category_id", None, type=int)
-        per_page = 24  # 固定每次返回 24 个帖子
-        new_post_ratio = float(
-            request.args.get("new_post_ratio", 0.7)
-        )  # 默认 70% 较新帖子
+        new_post_ratio = float(request.args.get("new_post_ratio", 0.75))
 
-        # 确保 new_post_ratio 在 0 到 1 之间
         new_post_ratio = max(0.0, min(1.0, new_post_ratio))
 
-        # 计算较新和较旧帖子的数量
-        new_post_count = math.ceil(per_page * new_post_ratio)  # 向上取整
-        old_post_count = per_page - new_post_count  # 剩余数量
-
-        # 查询所有帖子 ID 和创建时间
         query = db.session.query(Post.id, Post.create_time)
 
-        # 如果提供了 category_id，则筛选属于该分类的帖子
         if category_id is not None:
             query = query.join(Post.categories).filter(Category.id == category_id)
 
         posts_data = query.all()
 
         if not posts_data:
-            return (
-                jsonify(
-                    {
-                        "code": 200,
-                        "msg": "暂无帖子",
-                        "data": {
-                            "posts": [],
-                            "total": 0,
-                            "page": page,
-                            "per_page": per_page,
-                            "total_pages": 0,
-                        },
-                    }
-                ),
-                200,
-            )
+            return {
+                "msg": "暂无帖子",
+                "data": {
+                    "posts": [],
+                    "total": 0
+                }
+            }
 
-        # 提取 ID 和 create_time
         post_ids = [post[0] for post in posts_data]
         create_times = [post[1] for post in posts_data]
 
-        # 计算 create_time 的中位数，用于划分“较新”和“较旧”
         sorted_create_times = sorted(create_times)
         median_index = len(sorted_create_times) // 2
         median_create_time = sorted_create_times[median_index]
 
-        # 划分“较新”和“较旧”帖子 ID
         new_post_ids = []
         old_post_ids = []
         for pid, create_time in zip(post_ids, create_times):
@@ -99,7 +75,9 @@ def post_list():
             else:
                 old_post_ids.append(pid)
 
-        # 随机抽取帖子 ID
+        total_posts = len(post_ids)
+        new_post_count = math.ceil(total_posts * new_post_ratio)
+        old_post_count = total_posts - new_post_count
         selected_new_ids = (
             random.sample(new_post_ids, min(new_post_count, len(new_post_ids)))
             if new_post_ids
@@ -111,9 +89,7 @@ def post_list():
             else []
         )
 
-        # 如果数量不足，调整抽取
         if len(selected_new_ids) < new_post_count and old_post_ids:
-            # 从旧帖子中补充
             remaining_count = new_post_count - len(selected_new_ids)
             remaining_old_ids = [
                 pid for pid in old_post_ids if pid not in selected_old_ids
@@ -124,7 +100,6 @@ def post_list():
                 )
             )
         elif len(selected_old_ids) < old_post_count and new_post_ids:
-            # 从新帖子中补充
             remaining_count = old_post_count - len(selected_old_ids)
             remaining_new_ids = [
                 pid for pid in new_post_ids if pid not in selected_new_ids
@@ -134,17 +109,9 @@ def post_list():
                     remaining_new_ids, min(remaining_count, len(remaining_new_ids))
                 )
             )
-
-        # 合并选中的帖子 ID
         selected_ids = selected_new_ids + selected_old_ids
-
-        # 随机打乱最终列表
         random.shuffle(selected_ids)
-
-        # 查询选中的帖子
         selected_posts = Post.query.filter(Post.id.in_(selected_ids)).all()
-
-        # 按 selected_ids 的顺序排序（可选，如果需要保持随机顺序）
         selected_posts_dict = {post.id: post for post in selected_posts}
         ordered_posts = [
             selected_posts_dict[pid]
@@ -153,25 +120,18 @@ def post_list():
         ]
 
         # 构造响应数据
-        total_posts = len(post_ids)
         response = {
             "posts": [post.json for post in ordered_posts],
-            "total": total_posts,
-            "page": page,
-            "per_page": per_page,
-            "total_pages": (total_posts + per_page - 1) // per_page,
+            "total": total_posts
         }
 
-        return (
-            jsonify({"code": 200, "msg": "成功获取加权随机帖子列表", "data": response}),
-            200,
-        )
+        return {
+            "msg": "成功获取加权随机帖子列表",
+            "data": response
+        }
 
     except Exception as e:
-        return (
-            jsonify({"code": 500, "msg": f"获取加权随机帖子列表失败：{str(e)}"}),
-            500,
-        )
+        return {"error": f"获取加权随机帖子列表失败：{str(e)}"}, 500
 
 
 @post_blueprint.route("/<int:post_id>")
@@ -197,13 +157,10 @@ def get_post(post_id):
 @post_blueprint.route("/categories")
 def get_categories():
     categories = db.session.query(Category).all()
-    return jsonify(
-        {
-            "code": 200,
-            "msg": "成功获取所有分类",
-            "data": [category.json for category in categories],
-        }
-    )
+    return {
+        "msg": "成功获取所有分类",
+        "data": [category.json for category in categories],
+    }
 
 
 @post_blueprint.route("/like/<int:post_id>")
@@ -260,7 +217,7 @@ def subscribe():
         return {"msg": "关注成功"}, 200
 
 
-@post_blueprint.route("/comment", methods=["GET", "POST"])
+@post_blueprint.route("/comment", methods=["POST"])
 def comment_post():
     try:
         data = request.json
@@ -386,7 +343,7 @@ def upload_attachment():
         if not user_id:
             return {"error": "user_id不能为空"}
 
-        upload = UserUpload(
+        upload = Upload(
             user_id=user_id,
             filename=filename,
             filepath=filepath,
@@ -415,7 +372,7 @@ def delete_attachment():
         upload_id = request.args.get("id")
         if not upload_id:
             return {"error": "upload_id不能为空"}
-        upload = db.session.query(UserUpload).where(UserUpload.id == upload_id).first()
+        upload = db.session.query(Upload).where(Upload.id == upload_id).first()
         if upload:
             db.session.delete(upload)
         return {"msg": "删除成功"}
@@ -431,7 +388,7 @@ def delete_post():
     try:
         post_id = request.args.get("id")
         if not post_id:
-            return {"error": "post_id不能为    空"}
+            return {"error": "post_id不能为空"}
         post = db.session.query(Post).where(Post.id == post_id).first()
         if post:
             db.session.delete(post)
